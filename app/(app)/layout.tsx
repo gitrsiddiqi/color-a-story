@@ -44,7 +44,7 @@ function NavLink({ href, emoji, label }: { href: string; emoji: string; label: s
       className="flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-purple-100 hover:text-purple-600 transition-colors"
     >
       <span>{emoji}</span>
-      <span className="hidden sm:block">{label}</span>
+      <span>{label}</span>
     </Link>
   )
 }
