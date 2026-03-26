@@ -29,6 +29,8 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
   const outlineRef = useRef<HTMLCanvasElement>(null)
   const selectionRef = useRef<HTMLCanvasElement>(null)
   const selectedPixelsRef = useRef<Uint8Array | null>(null)
+  // Prevent synthetic mouse events firing after touch events on mobile
+  const lastTouchTime = useRef(0)
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [mode, setMode] = useState<'fill' | 'brush'>('fill')
@@ -78,7 +80,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       const outlineData = outlineCtx.createImageData(CW, CH)
       const od = outlineData.data
 
-      // Extract dark outline pixels
+      // Extract dark outline pixels from SVG
       for (let i = 0; i < d.length; i += 4) {
         const brightness = (d[i] + d[i + 1] + d[i + 2]) / 3
         if (brightness < 100 && d[i + 3] > 100) {
@@ -86,12 +88,13 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
         }
       }
 
-      // For objects: flood-fill outer background from corners → mark as barrier
+      // For objects: flood-fill outer background from corners → mark as barrier (alpha=51)
       // This prevents flood fill from leaking outside the object boundary
       if (!isBackdrop) {
         const W = CW, H = CH
         const visited = new Uint8Array(W * H)
         const queue: number[] = []
+        // A pixel is outer-background if: whitish in original AND not already an outline
         const isWhitish = (idx: number) => d[idx] > 200 && d[idx + 1] > 200 && d[idx + 2] > 200 && d[idx + 3] > 50
         const isNotOutline = (pos: number) => od[pos * 4 + 3] <= 50
 
@@ -106,7 +109,6 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
         let head = 0
         while (head < queue.length) {
           const pos = queue[head++]
-          // Mark as barrier (white color, just above fill threshold alpha=51)
           od[pos * 4] = 255; od[pos * 4 + 1] = 255; od[pos * 4 + 2] = 255; od[pos * 4 + 3] = 51
           const px = pos % W, py = Math.floor(pos / W)
           if (px > 0) tryAdd(pos - 1)
@@ -132,9 +134,8 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const scaleY = CH / rect.height
     let clientX: number, clientY: number
     if ('touches' in e) {
-      e.preventDefault()
-      clientX = e.touches[0].clientX
-      clientY = e.touches[0].clientY
+      clientX = e.touches[0]?.clientX ?? e.changedTouches[0]?.clientX ?? 0
+      clientY = e.touches[0]?.clientY ?? e.changedTouches[0]?.clientY ?? 0
     } else {
       clientX = (e as React.MouseEvent).clientX
       clientY = (e as React.MouseEvent).clientY
@@ -155,27 +156,15 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     return [d[0], d[1], d[2]]
   }
 
+  // Find region bounded ONLY by the outline layer (no color tolerance matching)
+  // This means clicking anywhere in a closed region always selects the ENTIRE region
   const findRegion = useCallback((startX: number, startY: number): Uint8Array | null => {
-    const color = colorRef.current
     const outline = outlineRef.current
-    if (!color || !outline) return null
+    if (!outline) return null
 
-    const colorCtx = color.getContext('2d')!
-    const outlineCtx = outline.getContext('2d')!
-    const colorData = colorCtx.getImageData(0, 0, CW, CH)
-    const outlineData = outlineCtx.getImageData(0, 0, CW, CH)
-    const cd = colorData.data
-    const od = outlineData.data
-
+    const od = outline.getContext('2d')!.getImageData(0, 0, CW, CH).data
     const si = (startY * CW + startX) * 4
-    if (od[si + 3] > 50) return null
-
-    const [sr, sg, sb] = [cd[si], cd[si + 1], cd[si + 2]]
-    const tolerance = 40
-    const matches = (idx: number) =>
-      Math.abs(cd[idx] - sr) <= tolerance &&
-      Math.abs(cd[idx + 1] - sg) <= tolerance &&
-      Math.abs(cd[idx + 2] - sb) <= tolerance
+    if (od[si + 3] > 50) return null  // on outline or barrier → can't fill
 
     const mask = new Uint8Array(CW * CH)
     const visited = new Uint8Array(CW * CH)
@@ -186,18 +175,24 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     let head = 0
     while (head < queue.length) {
       const pos = queue[head++]
-      const idx = pos * 4
-      if (od[idx + 3] > 50) continue
+      if (od[pos * 4 + 3] > 50) continue  // outline or barrier — stop here
       mask[pos] = 1
       const px = pos % CW, py = Math.floor(pos / CW)
-      if (px > 0) { const n = pos - 1; if (!visited[n] && matches(n * 4) && od[n * 4 + 3] <= 50) { visited[n] = 1; queue.push(n) } }
-      if (px < CW - 1) { const n = pos + 1; if (!visited[n] && matches(n * 4) && od[n * 4 + 3] <= 50) { visited[n] = 1; queue.push(n) } }
-      if (py > 0) { const n = pos - CW; if (!visited[n] && matches(n * 4) && od[n * 4 + 3] <= 50) { visited[n] = 1; queue.push(n) } }
-      if (py < CH - 1) { const n = pos + CW; if (!visited[n] && matches(n * 4) && od[n * 4 + 3] <= 50) { visited[n] = 1; queue.push(n) } }
+      const tryAdd = (n: number) => {
+        if (n >= 0 && n < CW * CH && !visited[n] && od[n * 4 + 3] <= 50) {
+          visited[n] = 1; queue.push(n)
+        }
+      }
+      if (px > 0) tryAdd(pos - 1)
+      if (px < CW - 1) tryAdd(pos + 1)
+      if (py > 0) tryAdd(pos - CW)
+      if (py < CH - 1) tryAdd(pos + CW)
     }
     return mask
   }, [CW, CH])
 
+  // Draw a dashed border around the selected region — NOT a solid fill —
+  // so it's clearly a "selection outline" and not an actual color
   const drawSelection = useCallback((mask: Uint8Array) => {
     const sel = selectionRef.current
     if (!sel) return
@@ -205,8 +200,22 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const imageData = ctx.createImageData(CW, CH)
     const d = imageData.data
     for (let i = 0; i < mask.length; i++) {
-      if (mask[i]) {
-        d[i * 4] = 255; d[i * 4 + 1] = 220; d[i * 4 + 2] = 0; d[i * 4 + 3] = 100
+      if (!mask[i]) continue
+      const px = i % CW, py = Math.floor(i / CW)
+      // Only draw border pixels (adjacent to a non-selected pixel)
+      const isBorder = (
+        (px > 0 && !mask[i - 1]) ||
+        (px < CW - 1 && !mask[i + 1]) ||
+        (py > 0 && !mask[i - CW]) ||
+        (py < CH - 1 && !mask[i + CW])
+      )
+      if (isBorder) {
+        // Alternating dash pattern
+        if ((px + py) % 6 < 3) {
+          d[i * 4] = 255; d[i * 4 + 1] = 200; d[i * 4 + 2] = 0; d[i * 4 + 3] = 255
+        } else {
+          d[i * 4] = 0; d[i * 4 + 1] = 0; d[i * 4 + 2] = 0; d[i * 4 + 3] = 180
+        }
       }
     }
     ctx.putImageData(imageData, 0, 0)
@@ -242,6 +251,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     }
   }, [CW, CH])
 
+  // Tap a color: if area is selected → fill it immediately. Otherwise just set the active color.
   const handleColorPick = useCallback((color: string) => {
     setSelectedColor(color)
     if (selectedPixelsRef.current) {
@@ -252,12 +262,12 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     }
   }, [fillRegion, clearSelection, composite, saveSnapshot])
 
+  // Tap canvas in fill mode: select the region under the tap (show dashed border)
   const handleCanvasClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (mode !== 'fill') return
     const { x, y } = getCoords(e)
     const mask = findRegion(x, y)
     if (!mask) return
-    // Always just select the region — never fill on area click
     selectedPixelsRef.current = mask
     drawSelection(mask)
     setHasSelection(true)
@@ -275,7 +285,15 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     composite()
   }, [selectedColor, brushSize, composite])
 
-  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+  const handlePointerDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e
+    if (isTouch) {
+      lastTouchTime.current = Date.now()
+    } else {
+      // Block synthetic mouse events that browsers fire after touch events
+      if (Date.now() - lastTouchTime.current < 600) return
+    }
+
     if (mode === 'fill') {
       handleCanvasClick(e)
     } else {
@@ -285,15 +303,15 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       saveSnapshot()
       brushPaint(x, y)
     }
-  }
+  }, [mode, handleCanvasClick, selectedColor, saveSnapshot, brushPaint])
 
-  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
+  const handlePointerMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!isPainting.current || mode !== 'brush') return
     const { x, y } = getCoords(e)
     brushPaint(x, y)
-  }
+  }, [mode, brushPaint])
 
-  const handlePointerUp = () => { isPainting.current = false }
+  const handlePointerUp = useCallback(() => { isPainting.current = false }, [])
 
   const handleUndo = () => {
     if (historyRef.current.length === 0) return
@@ -367,11 +385,11 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
   }
 
   const hint = mode === 'brush'
-    ? selectedColor ? '🖌️ Hold and drag to paint' : '👆 Pick a color to start painting'
-    : hasSelection ? '✨ Now tap a color to fill!' : selectedColor ? '👆 Tap any area to fill' : '👆 Tap an area to select it, then pick a color'
+    ? selectedColor ? '🖌️ Hold and drag to paint' : '👆 Pick a color first'
+    : hasSelection ? '✨ Now tap a color to fill!' : '👆 Tap any area to select it'
 
-  // ── Palette panel (shared between mobile and desktop) ──────────────────────
-  const PalettePanel = () => (
+  // Inline palette content as a function (not a component) to avoid React remounting
+  const paletteContent = () => (
     <div className="flex flex-col gap-4">
       {/* Mode toggle */}
       <div className="flex gap-2 bg-white rounded-2xl border-2 border-purple-200 p-1.5">
@@ -387,7 +405,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
 
       {mode === 'brush' && (
         <div className="flex items-center gap-2 bg-white rounded-2xl border-2 border-purple-200 p-3">
-          <span className="text-xs font-bold text-gray-500">Size</span>
+          <span className="text-sm font-bold text-gray-500">Size</span>
           <input type="range" min="5" max="40" value={brushSize} onChange={e => setBrushSize(+e.target.value)} className="flex-1" />
           <div className="rounded-full bg-gray-400 flex-shrink-0" style={{ width: Math.max(10, brushSize), height: Math.max(10, brushSize) }} />
         </div>
@@ -396,23 +414,24 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       {/* Color swatches */}
       <div className="bg-white rounded-2xl border-2 border-yellow-300 p-3 shadow">
         <div className="grid grid-cols-5 gap-2">
-          {COLORS.map(color => (
-            <button key={color} onClick={() => handleColorPick(color)}
-              className={`rounded-full border-4 transition-transform aspect-square ${selectedColor === color ? 'scale-125 border-gray-800' : 'border-gray-200 hover:scale-110'}`}
-              style={{ backgroundColor: color }}
+          {COLORS.map(c => (
+            <button key={c}
+              onClick={() => handleColorPick(c)}
+              className={`rounded-full border-4 transition-transform aspect-square ${selectedColor === c ? 'scale-125 border-gray-800 shadow-lg' : 'border-gray-200 hover:scale-110'}`}
+              style={{ backgroundColor: c }}
             />
           ))}
         </div>
         {selectedColor && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
-            <span className="text-xs font-bold text-gray-400">Color:</span>
+            <span className="text-xs font-bold text-gray-400">Selected:</span>
             <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" style={{ backgroundColor: selectedColor }} />
           </div>
         )}
       </div>
 
-      {/* Hint */}
-      <p className={`text-xs font-bold text-center px-3 py-2 rounded-xl ${hasSelection ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' : 'text-gray-500 bg-gray-50'}`}>
+      {/* Status hint */}
+      <p className={`text-sm font-bold text-center px-3 py-2 rounded-xl ${hasSelection ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' : 'text-gray-500 bg-gray-50'}`}>
         {hint}
       </p>
 
@@ -446,7 +465,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       <div className="flex flex-col md:flex-row gap-6 w-full items-start">
         {/* Left palette — desktop only */}
         <div className="hidden md:flex flex-col w-60 flex-shrink-0">
-          <PalettePanel />
+          {paletteContent()}
         </div>
 
         {/* Canvas */}
@@ -470,7 +489,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
 
       {/* Mobile palette — below canvas */}
       <div className="md:hidden w-full max-w-sm">
-        <PalettePanel />
+        {paletteContent()}
       </div>
 
       <canvas ref={colorRef} width={CW} height={CH} style={{ display: 'none' }} />
