@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #fffbf0;
+  --foreground: #2d2d2d;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.coloring-svg svg {
+  max-width: 100%;
+  height: auto;
+  cursor: crosshair;
+}
+
+.coloring-svg svg path,
+.coloring-svg svg ellipse,
+.coloring-svg svg circle,
+.coloring-svg svg rect,
+.coloring-svg svg polygon {
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.coloring-svg svg path:hover,
+.coloring-svg svg ellipse:hover,
+.coloring-svg svg circle:hover,
+.coloring-svg svg rect:hover,
+.coloring-svg svg polygon:hover {
+  opacity: 0.8;
 }
