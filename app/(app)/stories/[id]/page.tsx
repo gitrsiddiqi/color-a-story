@@ -49,7 +49,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
           </Link>
         </div>
       ) : (
-        <StoryViewer pages={story.story_pages} title={story.title} />
+        <StoryViewer pages={story.story_pages} title={story.title} storyId={story.id} />
       )}
     </div>
   )

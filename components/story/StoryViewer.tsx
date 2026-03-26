@@ -2,10 +2,12 @@
 import { useState } from 'react'
 import { motion, AnimatePresence, type TargetAndTransition } from 'framer-motion'
 import { StoryPage, SceneData, SceneObject } from '@/types'
+import Link from 'next/link'
 
 interface StoryViewerProps {
   pages: StoryPage[]
   title: string
+  storyId: string
 }
 
 const animationVariants: Record<string, TargetAndTransition> = {
@@ -28,7 +30,12 @@ const animationVariants: Record<string, TargetAndTransition> = {
   },
 }
 
-export default function StoryViewer({ pages, title }: StoryViewerProps) {
+// Positions may be stored as percentages (new) or pixels/600 (old)
+function toPercent(val: number): number {
+  return val > 100 ? (val / 600) * 100 : val
+}
+
+export default function StoryViewer({ pages, title, storyId }: StoryViewerProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [direction, setDirection] = useState(1)
 
@@ -86,8 +93,8 @@ export default function StoryViewer({ pages, title }: StoryViewerProps) {
                 animate={animationVariants[obj.animation] || {}}
                 className="absolute select-none"
                 style={{
-                  left: `${(obj.x / 600) * 100}%`,
-                  top: `${(obj.y / 400) * 100}%`,
+                  left: `${toPercent(obj.x)}%`,
+                  top: `${toPercent(obj.y)}%`,
                   width: `${(80 * obj.scale / 600) * 100}%`,
                   transform: 'translate(-50%, -50%)',
                   objectFit: 'contain',
@@ -123,6 +130,15 @@ export default function StoryViewer({ pages, title }: StoryViewerProps) {
           →
         </button>
       </div>
+
+      {page && (
+        <Link
+          href={`/scene-builder?storyId=${storyId}&pageId=${page.id}&page=${page.page_number}`}
+          className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold px-5 py-2 rounded-xl text-sm"
+        >
+          ✏️ Edit This Page
+        </Link>
+      )}
     </div>
   )
 }

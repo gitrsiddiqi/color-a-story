@@ -10,9 +10,11 @@ export default function SceneBuilderPage() {
   const searchParams = useSearchParams()
   const storyId = searchParams.get('storyId')
   const pageNum = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
+  const pageId = searchParams.get('pageId') // for editing existing page
 
   const [objects, setObjects] = useState<ColoredItem[]>([])
   const [backdrops, setBackdrops] = useState<ColoredItem[]>([])
+  const [initialData, setInitialData] = useState<SceneData | undefined>()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -20,6 +22,7 @@ export default function SceneBuilderPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
       const { data } = await supabase
         .from('colored_items')
         .select('*')
@@ -27,25 +30,46 @@ export default function SceneBuilderPage() {
         .order('created_at', { ascending: false })
       setObjects(data?.filter(i => i.item_type === 'object') ?? [])
       setBackdrops(data?.filter(i => i.item_type === 'backdrop') ?? [])
+
+      // Load existing page data if editing
+      if (pageId) {
+        const { data: existingPage } = await supabase
+          .from('story_pages')
+          .select('scene_data')
+          .eq('id', pageId)
+          .single()
+        if (existingPage?.scene_data) {
+          setInitialData(JSON.parse(existingPage.scene_data))
+        }
+      }
+
       setLoading(false)
     }
     load()
-  }, [])
+  }, [pageId])
 
   const handleSave = async (sceneData: SceneData) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    if (storyId && pageNum !== null) {
+    if (pageId) {
+      // Update existing page
+      await supabase.from('story_pages')
+        .update({ scene_data: JSON.stringify(sceneData) })
+        .eq('id', pageId)
+      router.push(`/stories/${storyId}`)
+    } else if (storyId && pageNum !== null) {
+      // Add new page to existing story
       await supabase.from('story_pages').upsert({
         story_id: storyId,
         page_number: pageNum,
-        backdrop_item_id: sceneData.backdrop_thumbnail ? null : null,
+        backdrop_item_id: null,
         scene_data: JSON.stringify(sceneData),
       })
       router.push(`/stories/${storyId}`)
     } else {
+      // Brand new story
       const { data: story } = await supabase.from('stories').insert({
         user_id: user.id,
         title: 'My Story',
@@ -71,6 +95,7 @@ export default function SceneBuilderPage() {
     <SceneBuilder
       objects={objects}
       backdrops={backdrops}
+      initialData={initialData}
       onSave={handleSave}
       onCancel={() => router.back()}
     />
