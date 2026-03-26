@@ -213,7 +213,9 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     return mask
   }, [CW, CH])
 
-  // Draw selection: semi-transparent cyan fill over the region + thick dashed border
+  // Draw a thick dashed border around the selected region (NO interior fill).
+  // No fill = no confusion with actual coloring.
+  // We dilate the 1-px border to ~4px so it stays visible when the canvas is scaled down.
   const drawSelection = useCallback((mask: Uint8Array) => {
     const sel = selectionRef.current
     if (!sel) return
@@ -221,28 +223,40 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const imageData = ctx.createImageData(CW, CH)
     const d = imageData.data
 
+    // Pass 1 — find exact 1-px border pixels
+    const border = new Uint8Array(mask.length)
     for (let i = 0; i < mask.length; i++) {
       if (!mask[i]) continue
       const px = i % CW, py = Math.floor(i / CW)
+      if (
+        (px > 0      && !mask[i - 1])  ||
+        (px < CW - 1 && !mask[i + 1]) ||
+        (py > 0      && !mask[i - CW]) ||
+        (py < CH - 1 && !mask[i + CW])
+      ) border[i] = 1
+    }
 
-      // A pixel is "border" if any of its 4 direct neighbours is outside the selection
-      const isBorder = (
-        (px > 0       && !mask[i - 1])   ||
-        (px < CW - 1  && !mask[i + 1])   ||
-        (py > 0       && !mask[i - CW])  ||
-        (py < CH - 1  && !mask[i + CW])
-      )
-
-      if (isBorder) {
-        // Alternating bright-yellow / near-black dashes, 5px each
-        if ((px + py) % 10 < 5) {
-          d[i * 4] = 255; d[i * 4 + 1] = 230; d[i * 4 + 2] = 0;   d[i * 4 + 3] = 255 // vivid yellow
-        } else {
-          d[i * 4] = 20;  d[i * 4 + 1] = 20;  d[i * 4 + 2] = 20;  d[i * 4 + 3] = 230 // near-black
+    // Pass 2 — dilate border inward by 4 px so it's visible at display scale
+    const thick = new Uint8Array(mask.length)
+    const R = 4
+    for (let i = 0; i < mask.length; i++) {
+      if (!border[i]) continue
+      for (let dy = -R; dy <= R; dy++) {
+        for (let dx = -R; dx <= R; dx++) {
+          const ni = i + dy * CW + dx
+          if (ni >= 0 && ni < mask.length && mask[ni]) thick[ni] = 1
         }
+      }
+    }
+
+    // Pass 3 — paint alternating yellow / black dashes on thick border pixels
+    for (let i = 0; i < mask.length; i++) {
+      if (!thick[i]) continue
+      const px = i % CW, py = Math.floor(i / CW)
+      if ((px + py) % 10 < 5) {
+        d[i * 4] = 255; d[i * 4 + 1] = 220; d[i * 4 + 2] = 0;  d[i * 4 + 3] = 255 // vivid yellow
       } else {
-        // Interior: light cyan wash so the whole region is clearly highlighted
-        d[i * 4] = 80;  d[i * 4 + 1] = 200; d[i * 4 + 2] = 255; d[i * 4 + 3] = 70
+        d[i * 4] = 10;  d[i * 4 + 1] = 10;  d[i * 4 + 2] = 10; d[i * 4 + 3] = 240 // near-black
       }
     }
 
