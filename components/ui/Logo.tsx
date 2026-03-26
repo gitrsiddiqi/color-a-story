@@ -1,100 +1,90 @@
-function LogoIcon({ size = 44 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        {/* Deep purple radial gradient background — lighter top-left, darker bottom-right */}
-        <radialGradient id="cas-bg" cx="38%" cy="32%" r="68%">
-          <stop offset="0%"   stopColor="#A855F7" />
-          <stop offset="100%" stopColor="#3B0764" />
-        </radialGradient>
+interface LogoProps {
+  height?: number
+  className?: string
+}
 
-        {/* Rainbow vertical gradient for the heart */}
-        <linearGradient id="cas-heart" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#FF2D55" />
-          <stop offset="22%"  stopColor="#FF7A00" />
-          <stop offset="44%"  stopColor="#FFD700" />
-          <stop offset="66%"  stopColor="#34D058" />
-          <stop offset="84%"  stopColor="#2F80ED" />
-          <stop offset="100%" stopColor="#9B59B6" />
+/**
+ * Full wordmark logo — a single SVG badge.
+ * "Color" in bold rainbow letters, "a Story" in white, on a deep purple pill
+ * with a sparkle star and subtle gloss shine.
+ * Scale via the `height` prop (width auto-calculated from viewBox ratio).
+ */
+export default function Logo({ height = 42, className = '' }: LogoProps) {
+  const VW = 248
+  const VH = 52
+  const width = Math.round((height / VH) * VW)
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${VW} ${VH}`}
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      style={{ display: 'block' }}
+    >
+      <defs>
+        {/* Rich purple pill background */}
+        <linearGradient id="cas-pill" x1="0" y1="0" x2="0.6" y2="1">
+          <stop offset="0%"   stopColor="#9333EA" />
+          <stop offset="100%" stopColor="#3B0764" />
         </linearGradient>
 
-        {/* Soft white gloss for 3-D shine on heart */}
-        <linearGradient id="cas-gloss" x1="0.2" y1="0" x2="0.5" y2="1">
-          <stop offset="0%"   stopColor="white" stopOpacity="0.45" />
+        {/* Top-half gloss to give the pill a shiny, 3-D feel */}
+        <linearGradient id="cas-gloss" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="white" stopOpacity="0.22" />
           <stop offset="100%" stopColor="white" stopOpacity="0"    />
         </linearGradient>
       </defs>
 
-      {/* Background circle */}
-      <circle cx="22" cy="22" r="22" fill="url(#cas-bg)" />
+      {/* ── Pill background ── */}
+      <rect x="1" y="1" width="246" height="50" rx="25" fill="url(#cas-pill)" />
 
-      {/* ── Rainbow heart ── */}
+      {/* Gloss over top half only */}
+      <rect x="1" y="1" width="246" height="26" rx="25" fill="url(#cas-gloss)" />
+
+      {/* ── Wordmark text ── */}
       {/*
-          Symmetric cubic-bezier heart:
-            bottom tip → up left side → top-left lobe
-            → V notch → top-right lobe → down right side → back to tip
+        "Color" — each letter its own bold rainbow colour
+        "a Story" — white, slightly lighter weight
+        All on one <text> baseline so letters sit flush together naturally.
       */}
-      <path
-        d="M 22 38
-           C 5 29 4 15 14 12
-           C 17 10 20 12 22 16
-           C 24 12 27 10 30 12
-           C 40 15 39 29 22 38 Z"
-        fill="url(#cas-heart)"
-      />
+      <text
+        y="37"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        fontWeight="900"
+        letterSpacing="-0.5"
+      >
+        <tspan x="22"  fontSize="30" fill="#FF2D55">C</tspan>
+        <tspan         fontSize="30" fill="#FF8C00">o</tspan>
+        <tspan         fontSize="30" fill="#FFD700">l</tspan>
+        <tspan         fontSize="30" fill="#22CC55">o</tspan>
+        <tspan         fontSize="30" fill="#4DAAFF">r</tspan>
+        <tspan         fontSize="23" fill="rgba(255,255,255,0.93)" fontWeight="800" dx="5">a Story</tspan>
+      </text>
 
-      {/* Gloss overlay — top-left shine makes heart feel dimensional */}
-      <path
-        d="M 22 16
-           C 20 12 17 10 14 12
-           C 11 14 9 18 10 22
-           C 14 17 18 14 22 16 Z"
-        fill="url(#cas-gloss)"
-      />
+      {/* ── Decorations ── */}
 
-      {/* ── Sparkles ── */}
-
-      {/* Big 4-point star — top-right outside heart */}
-      <g transform="translate(35,9)">
-        <line x1="-3.8" y1="0"    x2="3.8"  y2="0"    stroke="white" strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="0"    y1="-3.8" x2="0"    y2="3.8"  stroke="white" strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="-2.2" y1="-2.2" x2="2.2"  y2="2.2"  stroke="white" strokeWidth="0.9" strokeLinecap="round" opacity="0.75" />
-        <line x1="2.2"  y1="-2.2" x2="-2.2" y2="2.2"  stroke="white" strokeWidth="0.9" strokeLinecap="round" opacity="0.75" />
+      {/* 4-point sparkle star — sits top-right inside the pill */}
+      <g transform="translate(228, 14)">
+        <line x1="-5.5" y1="0"    x2="5.5"  y2="0"    stroke="white" strokeWidth="2"   strokeLinecap="round" opacity="0.85"/>
+        <line x1="0"    y1="-5.5" x2="0"    y2="5.5"  stroke="white" strokeWidth="2"   strokeLinecap="round" opacity="0.85"/>
+        <line x1="-3.2" y1="-3.2" x2="3.2"  y2="3.2"  stroke="white" strokeWidth="1.1" strokeLinecap="round" opacity="0.5"/>
+        <line x1="3.2"  y1="-3.2" x2="-3.2" y2="3.2"  stroke="white" strokeWidth="1.1" strokeLinecap="round" opacity="0.5"/>
       </g>
 
-      {/* Medium plus — top-left outside heart */}
-      <g transform="translate(8,14)" opacity="0.9">
-        <line x1="-2.2" y1="0"    x2="2.2"  y2="0"    stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-        <line x1="0"    y1="-2.2" x2="0"    y2="2.2"  stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-      </g>
+      {/* Small dot top-left — balances the sparkle */}
+      <circle cx="12"  cy="15" r="2.5" fill="white" opacity="0.3" />
 
-      {/* Small dot — lower-right corner */}
-      <circle cx="35" cy="31" r="1.6" fill="white" opacity="0.55" />
+      {/* Tiny dot bottom-right corner */}
+      <circle cx="236" cy="39" r="1.8" fill="white" opacity="0.22" />
 
-      {/* Tiny dot — lower-left */}
-      <circle cx="8"  cy="30" r="1"   fill="white" opacity="0.45" />
+      {/* Rainbow underline arc beneath "Color" — subtle, colourful accent */}
+      <path d="M 22 42 Q 72 50 122 42"  stroke="#FF2D55" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.35"/>
+      <path d="M 24 42 Q 72 48 120 42"  stroke="#FF8C00" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.35"/>
+      <path d="M 26 42 Q 72 47 118 42"  stroke="#FFD700" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.30"/>
+      <path d="M 28 42 Q 72 46 116 42"  stroke="#22CC55" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.28"/>
+      <path d="M 30 42 Q 72 45 114 42"  stroke="#4DAAFF" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.25"/>
     </svg>
-  )
-}
-
-interface LogoProps {
-  iconSize?: number
-  className?: string
-  textClassName?: string
-}
-
-export default function Logo({ iconSize = 44, className = '', textClassName = 'text-2xl' }: LogoProps) {
-  return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <LogoIcon size={iconSize} />
-      <span className={`font-extrabold leading-none tracking-tight ${textClassName}`}>
-        <span style={{ color: '#FF2D55' }}>C</span>
-        <span style={{ color: '#FF7A00' }}>o</span>
-        <span style={{ color: '#F59E0B' }}>l</span>
-        <span style={{ color: '#34D058' }}>o</span>
-        <span style={{ color: '#2F80ED' }}>r</span>
-        <span style={{ color: '#7C3AED' }}> a Story</span>
-      </span>
-    </div>
   )
 }
