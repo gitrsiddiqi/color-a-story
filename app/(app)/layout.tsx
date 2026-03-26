@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <MobileNav username={username} />
             <Link href="/dashboard">
-              <Logo height={38} />
+              <Logo height={52} />
             </Link>
           </div>
 

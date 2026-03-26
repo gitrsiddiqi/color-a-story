@@ -41,7 +41,7 @@ export default function MobileNav({ username }: { username: string }) {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b-4 border-yellow-400 bg-white">
               <Link href="/dashboard" onClick={() => setOpen(false)}>
-                <Logo height={36} />
+                <Logo height={52} />
               </Link>
               <button
                 onClick={() => setOpen(false)}

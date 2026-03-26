@@ -4,15 +4,30 @@ interface LogoProps {
 }
 
 /**
- * Full wordmark logo — a single SVG badge.
- * "Color" in bold rainbow letters, "a Story" in white, on a deep purple pill
- * with a sparkle star and subtle gloss shine.
- * Scale via the `height` prop (width auto-calculated from viewBox ratio).
+ * Wordmark logo — each letter of "Color" lives in its own
+ * bold coloured circle badge (slightly tilted, sticker-style),
+ * with "a Story" as a subtitle underneath.
+ *
+ * Inspired by top kids apps (Toca Boca, Khan Academy Kids):
+ * bold single shapes, vivid saturated colours, playful tilt.
  */
-export default function Logo({ height = 42, className = '' }: LogoProps) {
-  const VW = 248
-  const VH = 52
+export default function Logo({ height = 44, className = '' }: LogoProps) {
+  const VW = 228
+  const VH = 72
   const width = Math.round((height / VH) * VW)
+
+  // Each letter: character, x-center, fill colour, slight rotation for personality
+  const letters = [
+    { ch: 'C', cx: 22,  fill: '#FF2D55', rot: -7  },
+    { ch: 'o', cx: 68,  fill: '#FF8C00', rot:  5  },
+    { ch: 'l', cx: 114, fill: '#F59E0B', rot: -4  },
+    { ch: 'o', cx: 160, fill: '#22CC55', rot:  6  },
+    { ch: 'r', cx: 206, fill: '#3B9EFF', rot: -5  },
+  ]
+
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+  const CY = 27   // circle centre y
+  const R  = 22   // circle radius
 
   return (
     <svg
@@ -23,68 +38,60 @@ export default function Logo({ height = 42, className = '' }: LogoProps) {
       className={className}
       style={{ display: 'block' }}
     >
-      <defs>
-        {/* Rich purple pill background */}
-        <linearGradient id="cas-pill" x1="0" y1="0" x2="0.6" y2="1">
-          <stop offset="0%"   stopColor="#9333EA" />
-          <stop offset="100%" stopColor="#3B0764" />
-        </linearGradient>
+      {letters.map(({ ch, cx, fill, rot }) => {
+        // Slightly darker shade for a thin bottom shadow on each circle
+        const shadowFill = fill + '55'   // same hue, 1/3 opacity
+        return (
+          <g key={cx} transform={`rotate(${rot}, ${cx}, ${CY})`}>
+            {/* Soft drop shadow — offset circle beneath */}
+            <circle cx={cx + 1.5} cy={CY + 2.5} r={R} fill={shadowFill} />
 
-        {/* Top-half gloss to give the pill a shiny, 3-D feel */}
-        <linearGradient id="cas-gloss" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="white" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="white" stopOpacity="0"    />
-        </linearGradient>
-      </defs>
+            {/* Main coloured circle */}
+            <circle cx={cx} cy={CY} r={R} fill={fill} />
 
-      {/* ── Pill background ── */}
-      <rect x="1" y="1" width="246" height="50" rx="25" fill="url(#cas-pill)" />
+            {/* Top-left gloss highlight — makes it feel like a shiny sticker */}
+            <ellipse
+              cx={cx - R * 0.28}
+              cy={CY - R * 0.32}
+              rx={R * 0.42}
+              ry={R * 0.28}
+              fill="white"
+              opacity={0.28}
+              transform={`rotate(-35, ${cx - R * 0.28}, ${CY - R * 0.32})`}
+            />
 
-      {/* Gloss over top half only */}
-      <rect x="1" y="1" width="246" height="26" rx="25" fill="url(#cas-gloss)" />
+            {/* The letter */}
+            <text
+              x={cx}
+              y={CY}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={ch === 'l' ? 32 : 27}
+              fontWeight="900"
+              fill="white"
+              fontFamily={font}
+              style={{ userSelect: 'none' }}
+            >
+              {ch}
+            </text>
+          </g>
+        )
+      })}
 
-      {/* ── Wordmark text ── */}
-      {/*
-        "Color" — each letter its own bold rainbow colour
-        "a Story" — white, slightly lighter weight
-        All on one <text> baseline so letters sit flush together naturally.
-      */}
+      {/* ── "a Story" subtitle ── */}
       <text
-        y="37"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-        fontWeight="900"
-        letterSpacing="-0.5"
+        x={VW / 2}
+        y={62}
+        textAnchor="middle"
+        fontSize={15}
+        fontWeight="800"
+        letterSpacing="1.5"
+        fill="#5B21B6"
+        fontFamily={font}
+        style={{ userSelect: 'none' }}
       >
-        <tspan x="22"  fontSize="30" fill="#FF2D55">C</tspan>
-        <tspan         fontSize="30" fill="#FF8C00">o</tspan>
-        <tspan         fontSize="30" fill="#FFD700">l</tspan>
-        <tspan         fontSize="30" fill="#22CC55">o</tspan>
-        <tspan         fontSize="30" fill="#4DAAFF">r</tspan>
-        <tspan         fontSize="23" fill="rgba(255,255,255,0.93)" fontWeight="800" dx="5">a Story</tspan>
+        ✦ a Story ✦
       </text>
-
-      {/* ── Decorations ── */}
-
-      {/* 4-point sparkle star — sits top-right inside the pill */}
-      <g transform="translate(228, 14)">
-        <line x1="-5.5" y1="0"    x2="5.5"  y2="0"    stroke="white" strokeWidth="2"   strokeLinecap="round" opacity="0.85"/>
-        <line x1="0"    y1="-5.5" x2="0"    y2="5.5"  stroke="white" strokeWidth="2"   strokeLinecap="round" opacity="0.85"/>
-        <line x1="-3.2" y1="-3.2" x2="3.2"  y2="3.2"  stroke="white" strokeWidth="1.1" strokeLinecap="round" opacity="0.5"/>
-        <line x1="3.2"  y1="-3.2" x2="-3.2" y2="3.2"  stroke="white" strokeWidth="1.1" strokeLinecap="round" opacity="0.5"/>
-      </g>
-
-      {/* Small dot top-left — balances the sparkle */}
-      <circle cx="12"  cy="15" r="2.5" fill="white" opacity="0.3" />
-
-      {/* Tiny dot bottom-right corner */}
-      <circle cx="236" cy="39" r="1.8" fill="white" opacity="0.22" />
-
-      {/* Rainbow underline arc beneath "Color" — subtle, colourful accent */}
-      <path d="M 22 42 Q 72 50 122 42"  stroke="#FF2D55" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.35"/>
-      <path d="M 24 42 Q 72 48 120 42"  stroke="#FF8C00" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.35"/>
-      <path d="M 26 42 Q 72 47 118 42"  stroke="#FFD700" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.30"/>
-      <path d="M 28 42 Q 72 46 116 42"  stroke="#22CC55" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.28"/>
-      <path d="M 30 42 Q 72 45 114 42"  stroke="#4DAAFF" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.25"/>
     </svg>
   )
 }
