@@ -5,9 +5,9 @@ import Link from 'next/link'
 const NAV_ITEMS = [
   { href: '/color/object', emoji: '🖍️', label: 'Color Objects', color: 'hover:bg-pink-50 text-pink-700' },
   { href: '/color/backdrop', emoji: '🏞️', label: 'Color Backdrop', color: 'hover:bg-blue-50 text-blue-700' },
-  { href: '/library', emoji: '📚', label: 'My Library', color: 'hover:bg-indigo-50 text-indigo-700' },
   { href: '/scene-builder', emoji: '🎭', label: 'Build A Scene', color: 'hover:bg-green-50 text-green-700' },
   { href: '/stories', emoji: '📖', label: 'My Stories', color: 'hover:bg-yellow-50 text-yellow-700' },
+  { href: '/library', emoji: '📚', label: 'My Library', color: 'hover:bg-indigo-50 text-indigo-700' },
 ]
 
 export default function MobileNav({ username }: { username: string }) {

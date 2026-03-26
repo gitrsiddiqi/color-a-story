@@ -26,12 +26,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
 
-          {/* Center: desktop nav links */}
+          {/* Center: desktop nav links — in step order */}
           <div className="hidden sm:flex items-center gap-2">
             <NavLink href="/color/object" emoji="🖍️" label="Color" color="hover:bg-pink-100 hover:text-pink-700" />
-            <NavLink href="/library" emoji="📚" label="Library" color="hover:bg-blue-100 hover:text-blue-700" />
+            <NavLink href="/color/backdrop" emoji="🏞️" label="Backdrop" color="hover:bg-blue-100 hover:text-blue-700" />
             <NavLink href="/scene-builder" emoji="🎭" label="Scenes" color="hover:bg-green-100 hover:text-green-700" />
             <NavLink href="/stories" emoji="📖" label="Stories" color="hover:bg-yellow-100 hover:text-yellow-700" />
+            <NavLink href="/library" emoji="📚" label="Library" color="hover:bg-indigo-100 hover:text-indigo-700" />
           </div>
 
           {/* Right: username + logout (desktop only) */}
@@ -46,11 +47,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — mirrors the 4 steps */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t-4 border-yellow-400 z-50 shadow-2xl">
         <div className="flex items-center justify-around px-2 py-2">
           <BottomNavLink href="/color/object" emoji="🖍️" label="Color" />
-          <BottomNavLink href="/library" emoji="📚" label="Library" />
+          <BottomNavLink href="/color/backdrop" emoji="🏞️" label="Backdrop" />
           <BottomNavLink href="/scene-builder" emoji="🎭" label="Scenes" />
           <BottomNavLink href="/stories" emoji="📖" label="Stories" />
         </div>
