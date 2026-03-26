@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { ColoredItem, SceneObject, SceneData } from '@/types'
 
 interface SceneBuilderProps {
@@ -19,17 +19,20 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
       : null
   )
   const [sceneObjects, setSceneObjects] = useState<SceneObject[]>(initialData?.objects ?? [])
-  const [draggingId, setDraggingId] = useState<string | null>(null)
   const [selectedObjectIdx, setSelectedObjectIdx] = useState<number | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
+
+  // Pointer drag state
+  const draggingIdx = useRef<number | null>(null)
+  const dragOffset = useRef({ x: 0, y: 0 })
 
   const addObject = (item: ColoredItem) => {
     setSceneObjects(prev => [...prev, {
       colored_item_id: item.id,
       item_name: item.item_name,
       thumbnail: item.thumbnail,
-      x: 100 + Math.random() * 200,
-      y: 100 + Math.random() * 150,
+      x: 50 + Math.random() * 40,  // percent-based x
+      y: 30 + Math.random() * 30,  // percent-based y
       scale: 1,
       animation: 'none',
     }])
@@ -48,19 +51,40 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
     setSceneObjects(prev => prev.map((o, i) => i === idx ? { ...o, scale } : o))
   }
 
-  const handleStageDrop = (e: React.DragEvent) => {
+  const handleObjectPointerDown = useCallback((e: React.PointerEvent, idx: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const stage = stageRef.current
+    if (!stage) return
+    const rect = stage.getBoundingClientRect()
+    const obj = sceneObjects[idx]
+    // Store offset from object center to pointer in percent
+    const pointerXPct = ((e.clientX - rect.left) / rect.width) * 100
+    const pointerYPct = ((e.clientY - rect.top) / rect.height) * 100
+    dragOffset.current = { x: pointerXPct - obj.x, y: pointerYPct - obj.y }
+    draggingIdx.current = idx
+    setSelectedObjectIdx(idx)
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }, [sceneObjects])
+
+  const handleObjectPointerMove = useCallback((e: React.PointerEvent, idx: number) => {
+    if (draggingIdx.current !== idx) return
     e.preventDefault()
     const stage = stageRef.current
-    if (!stage || !draggingId) return
+    if (!stage) return
     const rect = stage.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const idx = sceneObjects.findIndex((_, i) => String(i) === draggingId)
-    if (idx !== -1) {
-      setSceneObjects(prev => prev.map((o, i) => i === idx ? { ...o, x, y } : o))
+    const xPct = ((e.clientX - rect.left) / rect.width) * 100 - dragOffset.current.x
+    const yPct = ((e.clientY - rect.top) / rect.height) * 100 - dragOffset.current.y
+    const clamped = {
+      x: Math.max(0, Math.min(100, xPct)),
+      y: Math.max(0, Math.min(100, yPct)),
     }
-    setDraggingId(null)
-  }
+    setSceneObjects(prev => prev.map((o, i) => i === idx ? { ...o, ...clamped } : o))
+  }, [])
+
+  const handleObjectPointerUp = useCallback((e: React.PointerEvent) => {
+    draggingIdx.current = null
+  }, [])
 
   const handleSave = () => {
     onSave({
@@ -84,17 +108,15 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
         <div className="flex-1">
           <div
             ref={stageRef}
-            className="relative bg-white rounded-2xl border-4 border-purple-300 overflow-hidden shadow-lg"
+            className="relative bg-white rounded-2xl border-4 border-purple-300 overflow-hidden shadow-lg touch-none"
             style={{ width: '100%', paddingBottom: '66%' }}
-            onDragOver={e => e.preventDefault()}
-            onDrop={handleStageDrop}
           >
             <div className="absolute inset-0">
               {selectedBackdrop ? (
                 <img src={selectedBackdrop.colored_svg || selectedBackdrop.thumbnail} alt="backdrop" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">
-                  Pick a backdrop from the panel →
+                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl p-4 text-center">
+                  Pick a backdrop below ↓
                 </div>
               )}
               {sceneObjects.map((obj, idx) => (
@@ -102,13 +124,14 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
                   key={idx}
                   src={obj.thumbnail}
                   alt={obj.item_name}
-                  draggable
-                  onDragStart={() => setDraggingId(String(idx))}
-                  onClick={() => setSelectedObjectIdx(idx === selectedObjectIdx ? null : idx)}
-                  className={`absolute cursor-grab active:cursor-grabbing select-none ${selectedObjectIdx === idx ? 'ring-4 ring-yellow-400 ring-offset-1 rounded' : ''}`}
+                  onPointerDown={e => handleObjectPointerDown(e, idx)}
+                  onPointerMove={e => handleObjectPointerMove(e, idx)}
+                  onPointerUp={handleObjectPointerUp}
+                  onPointerCancel={handleObjectPointerUp}
+                  className={`absolute select-none touch-none cursor-grab active:cursor-grabbing ${selectedObjectIdx === idx ? 'ring-4 ring-yellow-400 ring-offset-1 rounded' : ''}`}
                   style={{
-                    left: obj.x,
-                    top: obj.y,
+                    left: `${obj.x}%`,
+                    top: `${obj.y}%`,
                     width: 80 * obj.scale,
                     height: 80 * obj.scale,
                     transform: 'translate(-50%, -50%)',
@@ -163,7 +186,7 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
                   <button
                     key={b.id}
                     onClick={() => setSelectedBackdrop(b)}
-                    className={`rounded-xl overflow-hidden border-3 ${selectedBackdrop?.id === b.id ? 'border-blue-500' : 'border-gray-200 hover:border-blue-300'}`}
+                    className={`rounded-xl overflow-hidden border-2 ${selectedBackdrop?.id === b.id ? 'border-blue-500' : 'border-gray-200 hover:border-blue-300'}`}
                   >
                     <img src={b.thumbnail} alt={b.item_name} className="w-full aspect-square object-cover" />
                   </button>
@@ -173,7 +196,7 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
           </div>
 
           <div className="bg-white rounded-2xl border-2 border-pink-200 p-3 flex-1">
-            <h3 className="font-bold text-pink-600 mb-2">🖍️ Objects</h3>
+            <h3 className="font-bold text-pink-600 mb-2">🖍️ Objects <span className="text-xs text-gray-400 font-normal">(tap to add)</span></h3>
             {objects.length === 0 ? (
               <p className="text-sm text-gray-400">No objects yet. Color some objects first!</p>
             ) : (
