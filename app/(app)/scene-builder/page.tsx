@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SceneBuilder from '@/components/scene/SceneBuilder'
+import Breadcrumb from '@/components/ui/Breadcrumb'
 import { ColoredItem, SceneData } from '@/types'
 
 export default function SceneBuilderPage() {
@@ -92,12 +93,18 @@ export default function SceneBuilderPage() {
   }
 
   return (
-    <SceneBuilder
+    <div>
+      <Breadcrumb crumbs={[
+        ...(storyId ? [{ label: '📖 My Stories', href: '/stories' }] : []),
+        { label: '🎭 Scene Builder' },
+      ]} />
+      <SceneBuilder
       objects={objects}
       backdrops={backdrops}
       initialData={initialData}
       onSave={handleSave}
       onCancel={() => router.back()}
     />
+    </div>
   )
 }

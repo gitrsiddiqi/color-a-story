@@ -2,6 +2,7 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { coloringPages } from '@/data/coloring-pages'
 import ColoringCanvas from '@/components/coloring/ColoringCanvas'
+import Breadcrumb from '@/components/ui/Breadcrumb'
 import { createClient } from '@/lib/supabase/client'
 
 export default function ColorBackdropDetailPage() {
@@ -38,6 +39,10 @@ export default function ColorBackdropDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <Breadcrumb crumbs={[
+        { label: '🏞️ Color Backdrops', href: '/color/backdrop' },
+        { label: page.name },
+      ]} />
       {returnTo && (
         <button
           onClick={() => router.push(returnTo)}

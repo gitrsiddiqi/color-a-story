@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import LibraryItemCard from '@/components/library/LibraryItemCard'
+import Breadcrumb from '@/components/ui/Breadcrumb'
 
 export default async function LibraryPage() {
   const supabase = await createClient()
@@ -17,6 +18,7 @@ export default async function LibraryPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <Breadcrumb crumbs={[{ label: '📚 My Library' }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-purple-600">📚 My Library</h1>
         <div className="flex gap-2">

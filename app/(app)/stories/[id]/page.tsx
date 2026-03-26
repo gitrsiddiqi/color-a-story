@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import StoryViewer from '@/components/story/StoryViewer'
 import RenameStory from '@/components/story/RenameStory'
+import Breadcrumb from '@/components/ui/Breadcrumb'
 
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -22,6 +23,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+      <Breadcrumb crumbs={[{ label: '📖 My Stories', href: '/stories' }, { label: story.title }]} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <RenameStory storyId={story.id} initialTitle={story.title} />
         <div className="flex gap-2">
