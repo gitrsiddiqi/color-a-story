@@ -1,5 +1,5 @@
 'use client'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { coloringPages } from '@/data/coloring-pages'
 import ColoringCanvas from '@/components/coloring/ColoringCanvas'
 import { createClient } from '@/lib/supabase/client'
@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 export default function ColorObjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
   const page = coloringPages.find(p => p.id === id)
 
   if (!page) {
@@ -28,7 +30,7 @@ export default function ColorObjectDetailPage() {
     })
 
     if (!error) {
-      router.push('/library?saved=1')
+      router.push(returnTo ?? '/library?saved=1')
     } else {
       alert('Could not save. Please try again!')
     }
@@ -36,11 +38,19 @@ export default function ColorObjectDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {returnTo && (
+        <button
+          onClick={() => router.push(returnTo)}
+          className="mb-4 flex items-center gap-2 text-purple-600 font-bold hover:underline"
+        >
+          ← Back to Scene Builder
+        </button>
+      )}
       <ColoringCanvas
         svgString={page.svg}
         itemName={page.name}
         onSave={handleSave}
-        onCancel={() => router.back()}
+        onCancel={() => router.push(returnTo ?? '/color/object')}
       />
     </div>
   )

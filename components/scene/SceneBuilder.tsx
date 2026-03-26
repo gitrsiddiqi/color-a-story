@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { ColoredItem, SceneObject, SceneData } from '@/types'
 
 interface SceneBuilderProps {
@@ -17,6 +18,10 @@ const ANIMATIONS = ['none', 'bounce', 'wiggle', 'float', 'spin'] as const
 const OBJ_SIZE_PCT = 15
 
 export default function SceneBuilder({ backdrops, objects, initialData, onSave, onCancel }: SceneBuilderProps) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const returnTo = `${pathname}?${searchParams.toString()}`
+
   const [selectedBackdrop, setSelectedBackdrop] = useState<ColoredItem | null>(
     initialData?.backdrop_thumbnail
       ? backdrops.find(b => b.thumbnail === initialData.backdrop_thumbnail) ?? null
@@ -155,36 +160,48 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
             ))}
           </div>
 
-          {selectedObjectIdx !== null && sceneObjects[selectedObjectIdx] && (
-            <div className="mt-3 bg-white rounded-2xl border-2 border-yellow-300 p-4 flex flex-wrap gap-4 items-center">
-              <span className="font-bold text-gray-600">{sceneObjects[selectedObjectIdx].item_name}</span>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-bold text-gray-500">Size:</label>
-                <input
-                  type="range" min="0.5" max="3" step="0.1"
-                  value={sceneObjects[selectedObjectIdx].scale}
-                  onChange={e => updateScale(selectedObjectIdx, parseFloat(e.target.value))}
-                  className="w-24"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-bold text-gray-500">Animation:</label>
-                <select
-                  value={sceneObjects[selectedObjectIdx].animation}
-                  onChange={e => updateAnimation(selectedObjectIdx, e.target.value as SceneObject['animation'])}
-                  className="border-2 border-purple-300 rounded-lg px-2 py-1 text-sm"
+          {selectedObjectIdx !== null && sceneObjects[selectedObjectIdx] && (() => {
+            const selObj = sceneObjects[selectedObjectIdx]
+            const coloredItem = objects.find(o => o.id === selObj.colored_item_id)
+            return (
+              <div className="mt-3 bg-white rounded-2xl border-2 border-yellow-300 p-4 flex flex-wrap gap-4 items-center">
+                <span className="font-bold text-gray-600">{selObj.item_name}</span>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-bold text-gray-500">Size:</label>
+                  <input
+                    type="range" min="0.5" max="3" step="0.1"
+                    value={selObj.scale}
+                    onChange={e => updateScale(selectedObjectIdx, parseFloat(e.target.value))}
+                    className="w-24"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-bold text-gray-500">Animation:</label>
+                  <select
+                    value={selObj.animation}
+                    onChange={e => updateAnimation(selectedObjectIdx, e.target.value as SceneObject['animation'])}
+                    className="border-2 border-purple-300 rounded-lg px-2 py-1 text-sm"
+                  >
+                    {ANIMATIONS.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+                {coloredItem && (
+                  <Link
+                    href={`/color/object/${coloredItem.item_id}?returnTo=${encodeURIComponent(returnTo)}`}
+                    className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold px-3 py-1 rounded-xl text-sm"
+                  >
+                    ✏️ Edit Coloring
+                  </Link>
+                )}
+                <button
+                  onClick={() => removeObject(selectedObjectIdx)}
+                  className="ml-auto bg-red-100 hover:bg-red-200 text-red-600 font-bold px-3 py-1 rounded-xl text-sm"
                 >
-                  {ANIMATIONS.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
+                  🗑 Remove
+                </button>
               </div>
-              <button
-                onClick={() => removeObject(selectedObjectIdx)}
-                className="ml-auto bg-red-100 hover:bg-red-200 text-red-600 font-bold px-3 py-1 rounded-xl text-sm"
-              >
-                🗑 Remove
-              </button>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Side panel */}
@@ -201,13 +218,22 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {backdrops.map(b => (
-                  <button
-                    key={b.id}
-                    onClick={() => setSelectedBackdrop(b)}
-                    className={`rounded-xl overflow-hidden border-2 ${selectedBackdrop?.id === b.id ? 'border-blue-500' : 'border-gray-200 hover:border-blue-300'}`}
-                  >
-                    <img src={b.thumbnail} alt={b.item_name} className="w-full aspect-square object-cover" />
-                  </button>
+                  <div key={b.id} className="relative">
+                    <button
+                      onClick={() => setSelectedBackdrop(b)}
+                      className={`w-full rounded-xl overflow-hidden border-2 ${selectedBackdrop?.id === b.id ? 'border-blue-500' : 'border-gray-200 hover:border-blue-300'}`}
+                    >
+                      <img src={b.thumbnail} alt={b.item_name} className="w-full aspect-square object-cover" />
+                    </button>
+                    {selectedBackdrop?.id === b.id && (
+                      <Link
+                        href={`/color/backdrop/${b.item_id}?returnTo=${encodeURIComponent(returnTo)}`}
+                        className="absolute bottom-1 right-1 bg-white text-purple-600 text-xs font-bold px-1.5 py-0.5 rounded-lg shadow border border-purple-200 hover:bg-purple-50"
+                      >
+                        ✏️ Edit
+                      </Link>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
