@@ -76,24 +76,12 @@ export default async function DashboardPage() {
           title="View your stories"
           desc="Read your stories, add more pages, and share!"
           href="/stories"
-          done={false}
+          done={stories > 0}
           active={step === 4}
           disabled={stories === 0}
           count={stories > 0 ? `${stories} ${stories === 1 ? 'story' : 'stories'}` : undefined}
         />
       </div>
-
-      {/* Quick links if returning user */}
-      {step === 4 && (
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/color/object" className="bg-pink-100 border-2 border-pink-300 hover:bg-pink-200 rounded-2xl p-4 text-center font-bold text-gray-700 transition-all">
-            🖍️ Color more objects
-          </Link>
-          <Link href="/scene-builder" className="bg-green-100 border-2 border-green-300 hover:bg-green-200 rounded-2xl p-4 text-center font-bold text-gray-700 transition-all">
-            🎭 New scene
-          </Link>
-        </div>
-      )}
     </div>
   )
 }
