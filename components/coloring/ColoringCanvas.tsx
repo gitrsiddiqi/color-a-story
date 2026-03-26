@@ -88,14 +88,36 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
         }
       }
 
+      // Dilate outline by 1px (8-neighbors) to close anti-aliased gaps.
+      // SVG rasterization leaves soft gray pixels at edges (brightness 100-200) that our
+      // threshold misses. Without dilation, the outer-background BFS leaks through those
+      // gaps into enclosed shapes (e.g. turtle legs), marking their interior as barrier.
+      const totalPx = CW * CH
+      const sourceOutline: number[] = []
+      for (let pos = 0; pos < totalPx; pos++) {
+        if (od[pos * 4 + 3] > 50) sourceOutline.push(pos)
+      }
+      for (const pos of sourceOutline) {
+        const px = pos % CW, py = Math.floor(pos / CW)
+        const mark = (n: number) => {
+          if (n >= 0 && n < totalPx && od[n * 4 + 3] === 0) {
+            od[n * 4] = 0; od[n * 4 + 1] = 0; od[n * 4 + 2] = 0; od[n * 4 + 3] = 180
+          }
+        }
+        if (px > 0) { mark(pos - 1); if (py > 0) mark(pos - CW - 1); if (py < CH - 1) mark(pos + CW - 1) }
+        if (px < CW - 1) { mark(pos + 1); if (py > 0) mark(pos - CW + 1); if (py < CH - 1) mark(pos + CW + 1) }
+        if (py > 0) mark(pos - CW)
+        if (py < CH - 1) mark(pos + CW)
+      }
+
       // For objects: flood-fill outer background from corners → mark as barrier (alpha=51)
       // This prevents flood fill from leaking outside the object boundary
       if (!isBackdrop) {
         const W = CW, H = CH
         const visited = new Uint8Array(W * H)
         const queue: number[] = []
-        // A pixel is outer-background if: whitish in original AND not already an outline
-        const isWhitish = (idx: number) => d[idx] > 200 && d[idx + 1] > 200 && d[idx + 2] > 200 && d[idx + 3] > 50
+        // A pixel is outer-background if: clearly white in original AND not outline/dilated-outline
+        const isWhitish = (idx: number) => d[idx] > 230 && d[idx + 1] > 230 && d[idx + 2] > 230 && d[idx + 3] > 50
         const isNotOutline = (pos: number) => od[pos * 4 + 3] <= 50
 
         const tryAdd = (pos: number) => {
