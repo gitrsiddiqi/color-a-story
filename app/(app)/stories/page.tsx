@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import DeleteStoryButton from '@/components/story/DeleteStoryButton'
 
 export default async function StoriesPage() {
   const supabase = await createClient()
@@ -33,11 +34,7 @@ export default async function StoriesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stories?.map(story => (
-          <Link
-            key={story.id}
-            href={`/stories/${story.id}`}
-            className="bg-white rounded-2xl border-2 border-purple-200 hover:border-purple-400 shadow hover:shadow-lg p-5 flex flex-col gap-3 transition-all"
-          >
+          <div key={story.id} className="bg-white rounded-2xl border-2 border-purple-200 hover:border-purple-400 shadow hover:shadow-lg p-5 flex flex-col gap-3 transition-all">
             <div className="text-4xl">📖</div>
             <div>
               <h3 className="text-xl font-bold text-gray-700">{story.title}</h3>
@@ -46,8 +43,16 @@ export default async function StoriesPage() {
                 {new Date(story.updated_at).toLocaleDateString()}
               </p>
             </div>
-            <span className="text-purple-500 font-bold text-sm">Read & Edit →</span>
-          </Link>
+            <div className="flex gap-2 mt-auto">
+              <Link
+                href={`/stories/${story.id}`}
+                className="flex-1 text-center bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold text-sm py-2 rounded-xl"
+              >
+                📖 Read & Edit
+              </Link>
+              <DeleteStoryButton storyId={story.id} />
+            </div>
+          </div>
         ))}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import LibraryItemCard from '@/components/library/LibraryItemCard'
 
 export default async function LibraryPage() {
   const supabase = await createClient()
@@ -44,7 +45,7 @@ export default async function LibraryPage() {
           <h2 className="text-xl font-bold text-gray-600 mb-3">🖍️ Colored Objects ({objects.length})</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {objects.map(item => (
-              <LibraryItem key={item.id} item={item} />
+              <LibraryItemCard key={item.id} item={item} />
             ))}
           </div>
         </section>
@@ -55,31 +56,11 @@ export default async function LibraryPage() {
           <h2 className="text-xl font-bold text-gray-600 mb-3">🏞️ Colored Backdrops ({backdrops.length})</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {backdrops.map(item => (
-              <LibraryItem key={item.id} item={item} wide />
+              <LibraryItemCard key={item.id} item={item} wide />
             ))}
           </div>
         </section>
       )}
-    </div>
-  )
-}
-
-function LibraryItem({ item, wide = false }: { item: any; wide?: boolean }) {
-  return (
-    <div className={`bg-white rounded-2xl border-2 border-gray-200 shadow p-2 flex flex-col items-center gap-2 ${wide ? 'col-span-1' : ''}`}>
-      {item.thumbnail ? (
-        <img
-          src={item.thumbnail}
-          alt={item.item_name}
-          className="w-full rounded-xl object-contain bg-gray-50"
-          style={{ aspectRatio: '1' }}
-        />
-      ) : (
-        <div className="w-full bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-3xl" style={{ aspectRatio: '1' }}>
-          🎨
-        </div>
-      )}
-      <span className="font-bold text-sm text-gray-700 text-center">{item.item_name}</span>
     </div>
   )
 }
