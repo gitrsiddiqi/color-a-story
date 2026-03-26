@@ -213,33 +213,39 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     return mask
   }, [CW, CH])
 
-  // Draw a dashed border around the selected region — NOT a solid fill —
-  // so it's clearly a "selection outline" and not an actual color
+  // Draw selection: semi-transparent cyan fill over the region + thick dashed border
   const drawSelection = useCallback((mask: Uint8Array) => {
     const sel = selectionRef.current
     if (!sel) return
     const ctx = sel.getContext('2d')!
     const imageData = ctx.createImageData(CW, CH)
     const d = imageData.data
+
     for (let i = 0; i < mask.length; i++) {
       if (!mask[i]) continue
       const px = i % CW, py = Math.floor(i / CW)
-      // Only draw border pixels (adjacent to a non-selected pixel)
+
+      // A pixel is "border" if any of its 4 direct neighbours is outside the selection
       const isBorder = (
-        (px > 0 && !mask[i - 1]) ||
-        (px < CW - 1 && !mask[i + 1]) ||
-        (py > 0 && !mask[i - CW]) ||
-        (py < CH - 1 && !mask[i + CW])
+        (px > 0       && !mask[i - 1])   ||
+        (px < CW - 1  && !mask[i + 1])   ||
+        (py > 0       && !mask[i - CW])  ||
+        (py < CH - 1  && !mask[i + CW])
       )
+
       if (isBorder) {
-        // Alternating dash pattern
-        if ((px + py) % 6 < 3) {
-          d[i * 4] = 255; d[i * 4 + 1] = 200; d[i * 4 + 2] = 0; d[i * 4 + 3] = 255
+        // Alternating bright-yellow / near-black dashes, 5px each
+        if ((px + py) % 10 < 5) {
+          d[i * 4] = 255; d[i * 4 + 1] = 230; d[i * 4 + 2] = 0;   d[i * 4 + 3] = 255 // vivid yellow
         } else {
-          d[i * 4] = 0; d[i * 4 + 1] = 0; d[i * 4 + 2] = 0; d[i * 4 + 3] = 180
+          d[i * 4] = 20;  d[i * 4 + 1] = 20;  d[i * 4 + 2] = 20;  d[i * 4 + 3] = 230 // near-black
         }
+      } else {
+        // Interior: light cyan wash so the whole region is clearly highlighted
+        d[i * 4] = 80;  d[i * 4 + 1] = 200; d[i * 4 + 2] = 255; d[i * 4 + 3] = 70
       }
     }
+
     ctx.putImageData(imageData, 0, 0)
   }, [CW, CH])
 
