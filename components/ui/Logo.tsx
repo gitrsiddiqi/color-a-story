@@ -4,25 +4,27 @@ function LogoIcon({ size = 44 }: { size?: number }) {
       {/* Purple circle background */}
       <circle cx="22" cy="22" r="22" fill="#7c3aed" />
 
-      {/* Rainbow arcs — outermost to innermost, drawn before the book */}
-      <path d="M 7 27 Q 22 1 37 27"  stroke="#FF3366" strokeWidth="2.8" fill="none" strokeLinecap="round" />
-      <path d="M 9 27 Q 22 5 35 27"  stroke="#FF8800" strokeWidth="2.8" fill="none" strokeLinecap="round" />
-      <path d="M 11 27 Q 22 9 33 27"  stroke="#FFD700" strokeWidth="2.8" fill="none" strokeLinecap="round" />
-      <path d="M 13 27 Q 22 13 31 27" stroke="#22CC44" strokeWidth="2.8" fill="none" strokeLinecap="round" />
-      <path d="M 15 27 Q 22 17 29 27" stroke="#3399FF" strokeWidth="2.8" fill="none" strokeLinecap="round" />
+      {/* Crayon — vertical, pointing down */}
 
-      {/* Open book — sits at the bottom of the circle */}
-      <rect x="6" y="26" width="32" height="14" rx="2.5" fill="white" />
-      {/* Spine */}
-      <line x1="22" y1="26" x2="22" y2="40" stroke="#ddd6fe" strokeWidth="1.5" />
-      {/* Left page lines */}
-      <line x1="9"  y1="31" x2="20" y2="31" stroke="#ede9fe" strokeWidth="1" />
-      <line x1="9"  y1="34.5" x2="20" y2="34.5" stroke="#ede9fe" strokeWidth="1" />
-      <line x1="9"  y1="38" x2="20" y2="38" stroke="#ede9fe" strokeWidth="1" />
-      {/* Right page lines */}
-      <line x1="24" y1="31" x2="35" y2="31" stroke="#ede9fe" strokeWidth="1" />
-      <line x1="24" y1="34.5" x2="35" y2="34.5" stroke="#ede9fe" strokeWidth="1" />
-      <line x1="24" y1="38" x2="35" y2="38" stroke="#ede9fe" strokeWidth="1" />
+      {/* Flat top cap */}
+      <rect x="15" y="3" width="14" height="5" rx="2" fill="#E5B800" />
+
+      {/* Main yellow body */}
+      <rect x="15" y="8" width="14" height="24" fill="#FFD700" />
+
+      {/* Label band */}
+      <rect x="15" y="22" width="14" height="7" fill="#FFC107" />
+      {/* Label lines */}
+      <line x1="17" y1="24.5" x2="27" y2="24.5" stroke="white" strokeWidth="0.9" strokeLinecap="round" opacity="0.8" />
+      <line x1="17" y1="27"   x2="27" y2="27"   stroke="white" strokeWidth="0.9" strokeLinecap="round" opacity="0.8" />
+
+      {/* Wooden sharpened cone */}
+      <polygon points="15,32 29,32 22,41" fill="#D4A843" />
+      {/* Wood grain highlight */}
+      <line x1="22" y1="32" x2="22" y2="40" stroke="#C49030" strokeWidth="0.8" opacity="0.5" />
+
+      {/* Colored tip */}
+      <polygon points="19,39.5 25,39.5 22,43" fill="#FF3366" />
     </svg>
   )
 }
