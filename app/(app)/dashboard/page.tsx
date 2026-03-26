@@ -9,10 +9,12 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       {/* Welcome hero */}
-      <div className="rounded-3xl p-8 sm:p-12 text-center shadow-xl border-4 border-yellow-300" style={{ background: 'linear-gradient(135deg, #fff7ed, #fdf4ff)' }}>
-        <div className="text-7xl sm:text-8xl mb-4">🌈</div>
-        <h1 className="text-4xl sm:text-6xl font-bold text-purple-600">Hello, {username}!</h1>
-        <p className="text-gray-500 text-xl sm:text-2xl mt-3">Follow the steps to build your story!</p>
+      <div className="rounded-2xl px-6 py-4 sm:py-5 flex items-center gap-4 border-2 border-yellow-300" style={{ background: 'linear-gradient(135deg, #fff7ed, #fdf4ff)' }}>
+        <div className="text-4xl">🌈</div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-purple-600">Hello, {username}!</h1>
+          <p className="text-gray-500 text-sm sm:text-base">Follow the steps below to build your story!</p>
+        </div>
       </div>
 
       {/* Step cards — 2 columns on desktop */}
