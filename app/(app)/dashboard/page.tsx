@@ -7,37 +7,83 @@ export default async function DashboardPage() {
   const username = user?.user_metadata?.username || 'Artist'
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <div className="bg-white rounded-3xl p-8 shadow border-2 border-yellow-300 text-center">
-        <div className="text-6xl mb-3">🌈</div>
-        <h1 className="text-4xl font-bold text-purple-600">Hello, {username}!</h1>
-        <p className="text-gray-500 text-lg mt-2">Follow the steps to build your story!</p>
+    <div className="flex flex-col gap-8">
+      {/* Welcome hero */}
+      <div className="rounded-3xl p-8 sm:p-12 text-center shadow-xl border-4 border-yellow-300" style={{ background: 'linear-gradient(135deg, #fff7ed, #fdf4ff)' }}>
+        <div className="text-7xl sm:text-8xl mb-4">🌈</div>
+        <h1 className="text-4xl sm:text-6xl font-bold text-purple-600">Hello, {username}!</h1>
+        <p className="text-gray-500 text-xl sm:text-2xl mt-3">Follow the steps to build your story!</p>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <StepCard step={1} emoji="🖍️" title="Color some objects" desc="Pick animals, vehicles, food and more — then color them!" href="/color/object" color="border-pink-300 bg-pink-50 hover:bg-pink-100" />
-        <StepCard step={2} emoji="🏞️" title="Color a backdrop" desc="Color a background like a jungle, beach or space!" href="/color/backdrop" color="border-blue-300 bg-blue-50 hover:bg-blue-100" />
-        <StepCard step={3} emoji="🎭" title="Build a scene" desc="Place your objects on a backdrop to make a scene!" href="/scene-builder" color="border-green-300 bg-green-50 hover:bg-green-100" />
-        <StepCard step={4} emoji="📖" title="View your stories" desc="Read your stories, add more pages, and share!" href="/stories" color="border-yellow-300 bg-yellow-50 hover:bg-yellow-100" />
+      {/* Step cards — 2 columns on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <StepCard
+          step={1} emoji="🖍️"
+          title="Color some objects"
+          desc="Pick animals, vehicles, food and more — then color them!"
+          href="/color/object"
+          bg="from-pink-400 to-rose-500"
+          border="border-pink-300"
+        />
+        <StepCard
+          step={2} emoji="🏞️"
+          title="Color a backdrop"
+          desc="Color a background like a jungle, beach or space!"
+          href="/color/backdrop"
+          bg="from-blue-400 to-cyan-500"
+          border="border-blue-300"
+        />
+        <StepCard
+          step={3} emoji="🎭"
+          title="Build a scene"
+          desc="Place your objects on a backdrop to make a scene!"
+          href="/scene-builder"
+          bg="from-green-400 to-emerald-500"
+          border="border-green-300"
+        />
+        <StepCard
+          step={4} emoji="📖"
+          title="View your stories"
+          desc="Read your stories, add more pages, and share!"
+          href="/stories"
+          bg="from-yellow-400 to-orange-500"
+          border="border-yellow-300"
+        />
+      </div>
+
+      {/* Quick links */}
+      <div className="flex flex-wrap gap-3 justify-center">
+        <Link href="/library" className="bg-white border-2 border-purple-200 hover:border-purple-400 text-purple-600 font-bold px-6 py-3 rounded-2xl text-base shadow hover:shadow-md transition-all">
+          📚 My Library
+        </Link>
+        <Link href="/stories" className="bg-white border-2 border-purple-200 hover:border-purple-400 text-purple-600 font-bold px-6 py-3 rounded-2xl text-base shadow hover:shadow-md transition-all">
+          📖 My Stories
+        </Link>
       </div>
     </div>
   )
 }
 
-function StepCard({ step, emoji, title, desc, href, color }: {
-  step: number; emoji: string; title: string; desc: string; href: string; color: string
+function StepCard({ step, emoji, title, desc, href, bg, border }: {
+  step: number; emoji: string; title: string; desc: string; href: string; bg: string; border: string
 }) {
   return (
-    <Link href={href} className={`rounded-2xl border-2 p-4 flex items-center gap-4 shadow-sm transition-all ${color}`}>
-      <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-        {step}
+    <Link href={href} className={`rounded-3xl border-4 ${border} bg-white hover:shadow-2xl shadow-lg transition-all group overflow-hidden`}>
+      {/* Colored top bar */}
+      <div className={`bg-gradient-to-r ${bg} p-5 flex items-center gap-4`}>
+        <div className="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+          {step}
+        </div>
+        <span className="text-5xl">{emoji}</span>
       </div>
-      <div className="text-3xl flex-shrink-0">{emoji}</div>
-      <div className="flex-1">
-        <div className="font-bold text-gray-700">{title}</div>
-        <div className="text-sm text-gray-500">{desc}</div>
+      {/* Text body */}
+      <div className="p-5">
+        <div className="text-xl font-bold text-gray-800">{title}</div>
+        <div className="text-base text-gray-500 mt-1">{desc}</div>
+        <div className="mt-4 text-purple-500 font-bold text-base group-hover:translate-x-1 transition-transform inline-block">
+          Let's go →
+        </div>
       </div>
-      <div className="text-purple-400 font-bold text-xl">→</div>
     </Link>
   )
 }

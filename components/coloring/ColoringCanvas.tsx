@@ -376,11 +376,11 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       {/* Mode toggle */}
       <div className="flex gap-2 bg-white rounded-2xl border-2 border-purple-200 p-1.5">
         <button onClick={() => { setMode('fill'); clearSelection() }}
-          className={`flex-1 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${mode === 'fill' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+          className={`flex-1 px-3 py-2.5 rounded-xl font-bold text-base transition-colors ${mode === 'fill' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
           🪣 Fill
         </button>
         <button onClick={() => { setMode('brush'); clearSelection() }}
-          className={`flex-1 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${mode === 'brush' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+          className={`flex-1 px-3 py-2.5 rounded-xl font-bold text-base transition-colors ${mode === 'brush' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
           🖌️ Brush
         </button>
       </div>
@@ -420,16 +420,16 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
           <button onClick={handleUndo} disabled={historyRef.current.length === 0}
-            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-40 text-gray-700 font-bold py-2 rounded-xl text-sm">↩ Undo</button>
+            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-40 text-gray-700 font-bold py-2.5 rounded-xl text-base">↩ Undo</button>
           <button onClick={handleClear}
-            className="flex-1 bg-orange-200 hover:bg-orange-300 text-orange-700 font-bold py-2 rounded-xl text-sm">🗑 Clear</button>
+            className="flex-1 bg-orange-200 hover:bg-orange-300 text-orange-700 font-bold py-2.5 rounded-xl text-base">🗑 Clear</button>
         </div>
         {hasSelection && (
-          <button onClick={clearSelection} className="bg-yellow-200 hover:bg-yellow-300 text-yellow-700 font-bold py-2 rounded-xl text-sm">✕ Deselect</button>
+          <button onClick={clearSelection} className="bg-yellow-200 hover:bg-yellow-300 text-yellow-700 font-bold py-2.5 rounded-xl text-base">✕ Deselect</button>
         )}
-        <button onClick={onCancel} className="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 rounded-xl text-sm">Cancel</button>
+        <button onClick={onCancel} className="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2.5 rounded-xl text-base">Cancel</button>
         <button onClick={handleSave} disabled={saving || !loaded}
-          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-sm">
+          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-base shadow-md">
           {saving ? 'Saving...' : '💾 Save to Library'}
         </button>
       </div>
@@ -438,14 +438,14 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <h2 className="text-2xl font-bold text-purple-600 text-center">Color your {itemName}!</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold text-purple-600 text-center">Color your {itemName}!</h2>
 
       {!loaded && <div className="text-center py-8 text-gray-400">Loading...</div>}
 
       {/* Desktop: side-by-side layout. Mobile: stacked */}
       <div className="flex flex-col md:flex-row gap-6 w-full items-start">
         {/* Left palette — desktop only */}
-        <div className="hidden md:flex flex-col w-52 flex-shrink-0">
+        <div className="hidden md:flex flex-col w-60 flex-shrink-0">
           <PalettePanel />
         </div>
 

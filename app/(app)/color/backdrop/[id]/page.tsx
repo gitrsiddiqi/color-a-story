@@ -38,7 +38,7 @@ export default function ColorBackdropDetailPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div>
       <Breadcrumb crumbs={[
         { label: '🏞️ Color Backdrops', href: '/color/backdrop' },
         { label: page.name },

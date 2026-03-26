@@ -19,24 +19,25 @@ export default async function LibraryPage() {
   return (
     <div className="flex flex-col gap-8">
       <Breadcrumb crumbs={[{ label: '📚 My Library' }]} />
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-purple-600">📚 My Library</h1>
-        <div className="flex gap-2">
-          <Link href="/color/object" className="bg-pink-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-pink-600 text-sm">
+
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-4xl sm:text-5xl font-bold text-purple-600">📚 My Library</h1>
+        <div className="flex gap-3 flex-wrap">
+          <Link href="/color/object" className="bg-pink-500 text-white font-bold px-5 py-3 rounded-2xl hover:bg-pink-600 text-base shadow hover:shadow-md transition-all">
             + Color Object
           </Link>
-          <Link href="/color/backdrop" className="bg-blue-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-blue-600 text-sm">
+          <Link href="/color/backdrop" className="bg-blue-500 text-white font-bold px-5 py-3 rounded-2xl hover:bg-blue-600 text-base shadow hover:shadow-md transition-all">
             + Color Backdrop
           </Link>
         </div>
       </div>
 
       {items?.length === 0 && (
-        <div className="text-center py-16 bg-white rounded-3xl border-2 border-dashed border-gray-300">
-          <div className="text-6xl mb-4">🎨</div>
-          <p className="text-2xl font-bold text-gray-400">Your library is empty!</p>
-          <p className="text-gray-400 mt-2">Start coloring to fill it up</p>
-          <Link href="/color/object" className="mt-4 inline-block bg-purple-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-purple-600">
+        <div className="text-center py-20 bg-white rounded-3xl border-4 border-dashed border-gray-300">
+          <div className="text-8xl mb-6">🎨</div>
+          <p className="text-3xl font-bold text-gray-400">Your library is empty!</p>
+          <p className="text-gray-400 mt-2 text-lg">Start coloring to fill it up</p>
+          <Link href="/color/object" className="mt-6 inline-block bg-purple-500 text-white font-bold px-8 py-4 rounded-2xl hover:bg-purple-600 text-lg shadow-lg">
             Color Something!
           </Link>
         </div>
@@ -44,8 +45,8 @@ export default async function LibraryPage() {
 
       {objects.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold text-gray-600 mb-3">🖍️ Colored Objects ({objects.length})</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">🖍️ Colored Objects ({objects.length})</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {objects.map(item => (
               <LibraryItemCard key={item.id} item={item} />
             ))}
@@ -55,8 +56,8 @@ export default async function LibraryPage() {
 
       {backdrops.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold text-gray-600 mb-3">🏞️ Colored Backdrops ({backdrops.length})</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">🏞️ Colored Backdrops ({backdrops.length})</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {backdrops.map(item => (
               <LibraryItemCard key={item.id} item={item} wide />
             ))}

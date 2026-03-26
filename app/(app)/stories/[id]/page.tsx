@@ -22,18 +22,18 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const nextPage = (story.story_pages?.length ?? 0) + 1
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-6">
       <Breadcrumb crumbs={[{ label: '📖 My Stories', href: '/stories' }, { label: story.title }]} />
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <RenameStory storyId={story.id} initialTitle={story.title} />
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Link
             href={`/scene-builder?storyId=${story.id}&page=${nextPage}`}
-            className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-4 py-2 rounded-xl text-sm"
+            className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-5 py-3 rounded-2xl text-base shadow hover:shadow-md transition-all"
           >
             + Add Page
           </Link>
-          <Link href="/stories" className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-xl text-sm">
+          <Link href="/stories" className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-5 py-3 rounded-2xl text-base shadow hover:shadow-md transition-all">
             ← All Stories
           </Link>
         </div>

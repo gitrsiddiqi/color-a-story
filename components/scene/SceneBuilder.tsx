@@ -118,11 +118,11 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-purple-600">🎭 Scene Builder</h2>
-        <div className="flex gap-2">
-          <button onClick={onCancel} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-xl">Cancel</button>
-          <button onClick={handleSave} className="bg-green-500 hover:bg-green-600 text-white font-bold px-5 py-2 rounded-xl">💾 Save Scene</button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-3xl sm:text-4xl font-bold text-purple-600">🎭 Scene Builder</h2>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-5 py-3 rounded-2xl text-base shadow hover:shadow-md transition-all">Cancel</button>
+          <button onClick={handleSave} className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-2xl text-base shadow-lg hover:shadow-xl transition-all">💾 Save Scene</button>
         </div>
       </div>
 

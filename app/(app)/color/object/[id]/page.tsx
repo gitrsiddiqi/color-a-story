@@ -38,7 +38,7 @@ export default function ColorObjectDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <Breadcrumb crumbs={[
         { label: '🖍️ Color Objects', href: '/color/object' },
         { label: page.name },
