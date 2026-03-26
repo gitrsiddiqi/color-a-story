@@ -78,12 +78,44 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       const outlineData = outlineCtx.createImageData(CW, CH)
       const od = outlineData.data
 
+      // Extract dark outline pixels
       for (let i = 0; i < d.length; i += 4) {
         const brightness = (d[i] + d[i + 1] + d[i + 2]) / 3
         if (brightness < 100 && d[i + 3] > 100) {
           od[i] = d[i]; od[i + 1] = d[i + 1]; od[i + 2] = d[i + 2]; od[i + 3] = d[i + 3]
         }
       }
+
+      // For objects: flood-fill outer background from corners → mark as barrier
+      // This prevents flood fill from leaking outside the object boundary
+      if (!isBackdrop) {
+        const W = CW, H = CH
+        const visited = new Uint8Array(W * H)
+        const queue: number[] = []
+        const isWhitish = (idx: number) => d[idx] > 200 && d[idx + 1] > 200 && d[idx + 2] > 200 && d[idx + 3] > 50
+        const isNotOutline = (pos: number) => od[pos * 4 + 3] <= 50
+
+        const tryAdd = (pos: number) => {
+          if (!visited[pos] && isWhitish(pos * 4) && isNotOutline(pos)) {
+            visited[pos] = 1; queue.push(pos)
+          }
+        }
+        for (let x = 0; x < W; x++) { tryAdd(x); tryAdd((H - 1) * W + x) }
+        for (let y = 0; y < H; y++) { tryAdd(y * W); tryAdd(y * W + W - 1) }
+
+        let head = 0
+        while (head < queue.length) {
+          const pos = queue[head++]
+          // Mark as barrier (white color, just above fill threshold alpha=51)
+          od[pos * 4] = 255; od[pos * 4 + 1] = 255; od[pos * 4 + 2] = 255; od[pos * 4 + 3] = 51
+          const px = pos % W, py = Math.floor(pos / W)
+          if (px > 0) tryAdd(pos - 1)
+          if (px < W - 1) tryAdd(pos + 1)
+          if (py > 0) tryAdd(pos - W)
+          if (py < H - 1) tryAdd(pos + W)
+        }
+      }
+
       outlineCtx.putImageData(outlineData, 0, 0)
       composite()
       setLoaded(true)
@@ -91,7 +123,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     img.onerror = () => setLoaded(true)
     const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
     img.src = URL.createObjectURL(blob)
-  }, [svgString, CW, CH, composite])
+  }, [svgString, CW, CH, isBackdrop, composite])
 
   const getCoords = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = displayRef.current!
@@ -123,7 +155,6 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     return [d[0], d[1], d[2]]
   }
 
-  // BFS to find connected region pixels — returns a Uint8Array mask
   const findRegion = useCallback((startX: number, startY: number): Uint8Array | null => {
     const color = colorRef.current
     const outline = outlineRef.current
@@ -137,7 +168,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const od = outlineData.data
 
     const si = (startY * CW + startX) * 4
-    if (od[si + 3] > 50) return null // clicked on outline
+    if (od[si + 3] > 50) return null
 
     const [sr, sg, sb] = [cd[si], cd[si + 1], cd[si + 2]]
     const tolerance = 40
@@ -175,11 +206,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const d = imageData.data
     for (let i = 0; i < mask.length; i++) {
       if (mask[i]) {
-        // Animated yellow/gold shimmer tint
-        d[i * 4] = 255
-        d[i * 4 + 1] = 220
-        d[i * 4 + 2] = 0
-        d[i * 4 + 3] = 100
+        d[i * 4] = 255; d[i * 4 + 1] = 220; d[i * 4 + 2] = 0; d[i * 4 + 3] = 100
       }
     }
     ctx.putImageData(imageData, 0, 0)
@@ -208,6 +235,13 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     ctx.putImageData(colorData, 0, 0)
   }, [CW, CH])
 
+  const saveSnapshot = useCallback(() => {
+    const colorCtx = colorRef.current?.getContext('2d')
+    if (colorCtx) {
+      historyRef.current = [...historyRef.current.slice(-19), colorCtx.getImageData(0, 0, CW, CH)]
+    }
+  }, [CW, CH])
+
   const handleColorPick = useCallback((color: string) => {
     setSelectedColor(color)
     if (selectedPixelsRef.current) {
@@ -216,7 +250,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       clearSelection()
       composite()
     }
-  }, [fillRegion, clearSelection, composite])
+  }, [fillRegion, clearSelection, composite, saveSnapshot])
 
   const handleCanvasClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (mode !== 'fill') return
@@ -225,19 +259,17 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     if (!mask) return
 
     if (selectedColor) {
-      // Fill immediately if color already selected
       saveSnapshot()
       fillRegion(mask, selectedColor)
       clearSelection()
       composite()
     } else {
-      // Just select the region
       selectedPixelsRef.current = mask
       drawSelection(mask)
       setHasSelection(true)
       composite()
     }
-  }, [mode, selectedColor, findRegion, fillRegion, clearSelection, drawSelection, composite])
+  }, [mode, selectedColor, findRegion, fillRegion, clearSelection, drawSelection, composite, saveSnapshot])
 
   const brushPaint = useCallback((x: number, y: number) => {
     const color = colorRef.current
@@ -249,13 +281,6 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     ctx.fill()
     composite()
   }, [selectedColor, brushSize, composite])
-
-  const saveSnapshot = () => {
-    const colorCtx = colorRef.current?.getContext('2d')
-    if (colorCtx) {
-      historyRef.current = [...historyRef.current.slice(-19), colorCtx.getImageData(0, 0, CW, CH)]
-    }
-  }
 
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (mode === 'fill') {
@@ -299,7 +324,7 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const d = imageData.data
     const W = canvas.width, H = canvas.height
-    const isWhitish = (idx: number) => d[idx] > 220 && d[idx + 1] > 220 && d[idx + 2] > 220 && d[idx + 3] > 100
+    const isWhitish = (idx: number) => d[idx] > 220 && d[idx + 1] > 220 && d[idx + 2] > 220 && d[idx + 3] > 50
     const visited = new Uint8Array(W * H)
     const queue: number[] = []
     const tryAdd = (pos: number) => {
@@ -348,84 +373,116 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     setSaving(false)
   }
 
-  const fillInstruction = selectedColor
-    ? hasSelection ? `Tap a color to fill the selected area` : `Tap any area to fill it with ${' '}`
-    : hasSelection ? '✨ Now tap a color below to fill!' : '👆 Tap an area to select it, then pick a color'
+  const hint = mode === 'brush'
+    ? selectedColor ? '🖌️ Hold and drag to paint' : '👆 Pick a color to start painting'
+    : hasSelection ? '✨ Now tap a color to fill!' : selectedColor ? '👆 Tap any area to fill' : '👆 Tap an area to select it, then pick a color'
 
-  return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      <h2 className="text-2xl font-bold text-purple-600">Color your {itemName}!</h2>
-
-      <div className="flex gap-2 bg-white rounded-2xl border-2 border-purple-200 p-2">
-        <button onClick={() => { setMode('fill'); clearSelection() }} className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors ${mode === 'fill' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+  // ── Palette panel (shared between mobile and desktop) ──────────────────────
+  const PalettePanel = () => (
+    <div className="flex flex-col gap-4">
+      {/* Mode toggle */}
+      <div className="flex gap-2 bg-white rounded-2xl border-2 border-purple-200 p-1.5">
+        <button onClick={() => { setMode('fill'); clearSelection() }}
+          className={`flex-1 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${mode === 'fill' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
           🪣 Fill
         </button>
-        <button onClick={() => { setMode('brush'); clearSelection() }} className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors ${mode === 'brush' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+        <button onClick={() => { setMode('brush'); clearSelection() }}
+          className={`flex-1 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${mode === 'brush' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
           🖌️ Brush
         </button>
       </div>
 
       {mode === 'brush' && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-gray-500">Brush size:</span>
-          <input type="range" min="5" max="40" value={brushSize} onChange={e => setBrushSize(+e.target.value)} className="w-28" />
-          <div className="rounded-full bg-gray-400" style={{ width: brushSize * 2, height: brushSize * 2, minWidth: 10 }} />
+        <div className="flex items-center gap-2 bg-white rounded-2xl border-2 border-purple-200 p-3">
+          <span className="text-xs font-bold text-gray-500">Size</span>
+          <input type="range" min="5" max="40" value={brushSize} onChange={e => setBrushSize(+e.target.value)} className="flex-1" />
+          <div className="rounded-full bg-gray-400 flex-shrink-0" style={{ width: Math.max(10, brushSize), height: Math.max(10, brushSize) }} />
         </div>
       )}
 
-      {/* Color palette */}
-      <div className="flex flex-col items-center gap-2 bg-white rounded-2xl p-3 shadow border-2 border-yellow-300 max-w-sm w-full">
-        <div className="flex flex-wrap justify-center gap-2">
+      {/* Color swatches */}
+      <div className="bg-white rounded-2xl border-2 border-yellow-300 p-3 shadow">
+        <div className="grid grid-cols-5 gap-2">
           {COLORS.map(color => (
             <button key={color} onClick={() => handleColorPick(color)}
-              className={`rounded-full border-4 transition-transform ${selectedColor === color ? 'scale-125 border-gray-800' : 'border-gray-200 hover:scale-110'}`}
-              style={{ backgroundColor: color, width: 32, height: 32 }}
+              className={`rounded-full border-4 transition-transform aspect-square ${selectedColor === color ? 'scale-125 border-gray-800' : 'border-gray-200 hover:scale-110'}`}
+              style={{ backgroundColor: color }}
             />
           ))}
         </div>
         {selectedColor && (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs font-bold text-gray-500">Selected:</span>
-            <div className="w-6 h-6 rounded-full border-2 border-gray-400" style={{ backgroundColor: selectedColor }} />
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+            <span className="text-xs font-bold text-gray-400">Color:</span>
+            <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" style={{ backgroundColor: selectedColor }} />
           </div>
         )}
       </div>
 
-      <p className={`text-sm font-bold text-center px-4 py-2 rounded-xl ${hasSelection ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' : 'text-gray-500'}`}>
-        {mode === 'fill' ? fillInstruction : selectedColor ? '🖌️ Hold and drag to paint' : '👆 Pick a color above to start painting'}
+      {/* Hint */}
+      <p className={`text-xs font-bold text-center px-3 py-2 rounded-xl ${hasSelection ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' : 'text-gray-500 bg-gray-50'}`}>
+        {hint}
       </p>
 
+      {/* Action buttons */}
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button onClick={handleUndo} disabled={historyRef.current.length === 0}
+            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-40 text-gray-700 font-bold py-2 rounded-xl text-sm">↩ Undo</button>
+          <button onClick={handleClear}
+            className="flex-1 bg-orange-200 hover:bg-orange-300 text-orange-700 font-bold py-2 rounded-xl text-sm">🗑 Clear</button>
+        </div>
+        {hasSelection && (
+          <button onClick={clearSelection} className="bg-yellow-200 hover:bg-yellow-300 text-yellow-700 font-bold py-2 rounded-xl text-sm">✕ Deselect</button>
+        )}
+        <button onClick={onCancel} className="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 rounded-xl text-sm">Cancel</button>
+        <button onClick={handleSave} disabled={saving || !loaded}
+          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-sm">
+          {saving ? 'Saving...' : '💾 Save to Library'}
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      <h2 className="text-2xl font-bold text-purple-600 text-center">Color your {itemName}!</h2>
+
       {!loaded && <div className="text-center py-8 text-gray-400">Loading...</div>}
-      <div className="relative w-full" style={{ maxWidth: CW }}>
-        <canvas
-          ref={displayRef}
-          width={CW}
-          height={CH}
-          onMouseDown={handlePointerDown}
-          onMouseMove={handlePointerMove}
-          onMouseUp={handlePointerUp}
-          onMouseLeave={handlePointerUp}
-          onTouchStart={handlePointerDown}
-          onTouchMove={handlePointerMove}
-          onTouchEnd={handlePointerUp}
-          style={{ touchAction: 'none', cursor: mode === 'fill' ? 'crosshair' : 'cell', display: loaded ? 'block' : 'none' }}
-          className="w-full rounded-2xl border-4 border-purple-300 shadow-lg bg-white"
-        />
+
+      {/* Desktop: side-by-side layout. Mobile: stacked */}
+      <div className="flex flex-col md:flex-row gap-6 w-full items-start">
+        {/* Left palette — desktop only */}
+        <div className="hidden md:flex flex-col w-52 flex-shrink-0">
+          <PalettePanel />
+        </div>
+
+        {/* Canvas */}
+        <div className="flex-1 w-full" style={{ maxWidth: CW }}>
+          <canvas
+            ref={displayRef}
+            width={CW}
+            height={CH}
+            onMouseDown={handlePointerDown}
+            onMouseMove={handlePointerMove}
+            onMouseUp={handlePointerUp}
+            onMouseLeave={handlePointerUp}
+            onTouchStart={handlePointerDown}
+            onTouchMove={handlePointerMove}
+            onTouchEnd={handlePointerUp}
+            style={{ touchAction: 'none', cursor: mode === 'fill' ? 'crosshair' : 'cell', display: loaded ? 'block' : 'none' }}
+            className="w-full rounded-2xl border-4 border-purple-300 shadow-lg bg-white"
+          />
+        </div>
+      </div>
+
+      {/* Mobile palette — below canvas */}
+      <div className="md:hidden w-full max-w-sm">
+        <PalettePanel />
       </div>
 
       <canvas ref={colorRef} width={CW} height={CH} style={{ display: 'none' }} />
       <canvas ref={outlineRef} width={CW} height={CH} style={{ display: 'none' }} />
       <canvas ref={selectionRef} width={CW} height={CH} style={{ display: 'none' }} />
-
-      <div className="flex gap-3 flex-wrap justify-center">
-        <button onClick={handleUndo} disabled={historyRef.current.length === 0} className="bg-gray-200 hover:bg-gray-300 disabled:opacity-40 text-gray-700 font-bold px-5 py-2 rounded-xl">↩ Undo</button>
-        <button onClick={handleClear} className="bg-orange-200 hover:bg-orange-300 text-orange-700 font-bold px-5 py-2 rounded-xl">🗑 Clear</button>
-        {hasSelection && <button onClick={clearSelection} className="bg-yellow-200 hover:bg-yellow-300 text-yellow-700 font-bold px-5 py-2 rounded-xl">✕ Deselect</button>}
-        <button onClick={onCancel} className="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-5 py-2 rounded-xl">Cancel</button>
-        <button onClick={handleSave} disabled={saving || !loaded} className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold px-6 py-2 rounded-xl text-lg">
-          {saving ? 'Saving...' : '💾 Save to Library'}
-        </button>
-      </div>
     </div>
   )
 }

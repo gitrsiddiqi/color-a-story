@@ -7,15 +7,21 @@ interface Crumb {
 
 export default function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   return (
-    <nav className="flex items-center gap-1 text-sm font-bold text-gray-400 mb-4 flex-wrap">
-      <Link href="/dashboard" className="hover:text-purple-500 transition-colors">🏠 Home</Link>
+    <nav className="flex items-center gap-1.5 mb-5 flex-wrap">
+      <Link href="/dashboard" className="flex items-center gap-1 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold text-xs px-3 py-1.5 rounded-full transition-colors">
+        🏠 Home
+      </Link>
       {crumbs.map((c, i) => (
-        <span key={i} className="flex items-center gap-1">
-          <span className="text-gray-300">›</span>
+        <span key={i} className="flex items-center gap-1.5">
+          <span className="text-gray-300 font-bold">›</span>
           {c.href ? (
-            <Link href={c.href} className="hover:text-purple-500 transition-colors">{c.label}</Link>
+            <Link href={c.href} className="flex items-center gap-1 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold text-xs px-3 py-1.5 rounded-full transition-colors">
+              {c.label}
+            </Link>
           ) : (
-            <span className="text-gray-600">{c.label}</span>
+            <span className="flex items-center gap-1 bg-gray-100 text-gray-600 font-bold text-xs px-3 py-1.5 rounded-full">
+              {c.label}
+            </span>
           )}
         </span>
       ))}
