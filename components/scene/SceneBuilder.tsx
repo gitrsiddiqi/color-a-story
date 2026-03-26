@@ -12,6 +12,9 @@ interface SceneBuilderProps {
 
 const ANIMATIONS = ['none', 'bounce', 'wiggle', 'float', 'spin'] as const
 
+// Object base size as % of stage width (scale=1)
+const OBJ_SIZE_PCT = 15
+
 export default function SceneBuilder({ backdrops, objects, initialData, onSave, onCancel }: SceneBuilderProps) {
   const [selectedBackdrop, setSelectedBackdrop] = useState<ColoredItem | null>(
     initialData?.backdrop_thumbnail
@@ -26,13 +29,27 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
   const draggingIdx = useRef<number | null>(null)
   const dragOffset = useRef({ x: 0, y: 0 })
 
+  const getStageRect = () => {
+    const el = stageRef.current
+    if (!el) return null
+    // Use inner content area (subtract border width)
+    const rect = el.getBoundingClientRect()
+    const border = 4 // border-4 = 4px each side in Tailwind (actually 4*1=4px... wait border-4 = 4*4=16px? No, in Tailwind border-4 = border-width: 4px)
+    return {
+      left: rect.left + border,
+      top: rect.top + border,
+      width: rect.width - border * 2,
+      height: rect.height - border * 2,
+    }
+  }
+
   const addObject = (item: ColoredItem) => {
     setSceneObjects(prev => [...prev, {
       colored_item_id: item.id,
       item_name: item.item_name,
       thumbnail: item.thumbnail,
-      x: 50 + Math.random() * 40,  // percent-based x
-      y: 30 + Math.random() * 30,  // percent-based y
+      x: 30 + Math.random() * 40,
+      y: 30 + Math.random() * 40,
       scale: 1,
       animation: 'none',
     }])
@@ -54,11 +71,9 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
   const handleObjectPointerDown = useCallback((e: React.PointerEvent, idx: number) => {
     e.preventDefault()
     e.stopPropagation()
-    const stage = stageRef.current
-    if (!stage) return
-    const rect = stage.getBoundingClientRect()
+    const rect = getStageRect()
+    if (!rect) return
     const obj = sceneObjects[idx]
-    // Store offset from object center to pointer in percent
     const pointerXPct = ((e.clientX - rect.left) / rect.width) * 100
     const pointerYPct = ((e.clientY - rect.top) / rect.height) * 100
     dragOffset.current = { x: pointerXPct - obj.x, y: pointerYPct - obj.y }
@@ -70,19 +85,18 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
   const handleObjectPointerMove = useCallback((e: React.PointerEvent, idx: number) => {
     if (draggingIdx.current !== idx) return
     e.preventDefault()
-    const stage = stageRef.current
-    if (!stage) return
-    const rect = stage.getBoundingClientRect()
+    const rect = getStageRect()
+    if (!rect) return
     const xPct = ((e.clientX - rect.left) / rect.width) * 100 - dragOffset.current.x
     const yPct = ((e.clientY - rect.top) / rect.height) * 100 - dragOffset.current.y
-    const clamped = {
+    setSceneObjects(prev => prev.map((o, i) => i === idx ? {
+      ...o,
       x: Math.max(0, Math.min(100, xPct)),
       y: Math.max(0, Math.min(100, yPct)),
-    }
-    setSceneObjects(prev => prev.map((o, i) => i === idx ? { ...o, ...clamped } : o))
+    } : o))
   }, [])
 
-  const handleObjectPointerUp = useCallback((e: React.PointerEvent) => {
+  const handleObjectPointerUp = useCallback(() => {
     draggingIdx.current = null
   }, [])
 
@@ -109,37 +123,35 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
           <div
             ref={stageRef}
             className="relative bg-white rounded-2xl border-4 border-purple-300 overflow-hidden shadow-lg touch-none"
-            style={{ width: '100%', paddingBottom: '66%' }}
+            style={{ width: '100%', aspectRatio: '3/2' }}
           >
-            <div className="absolute inset-0">
-              {selectedBackdrop ? (
-                <img src={selectedBackdrop.colored_svg || selectedBackdrop.thumbnail} alt="backdrop" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl p-4 text-center">
-                  Pick a backdrop below ↓
-                </div>
-              )}
-              {sceneObjects.map((obj, idx) => (
-                <img
-                  key={idx}
-                  src={obj.thumbnail}
-                  alt={obj.item_name}
-                  onPointerDown={e => handleObjectPointerDown(e, idx)}
-                  onPointerMove={e => handleObjectPointerMove(e, idx)}
-                  onPointerUp={handleObjectPointerUp}
-                  onPointerCancel={handleObjectPointerUp}
-                  className={`absolute select-none touch-none cursor-grab active:cursor-grabbing ${selectedObjectIdx === idx ? 'ring-4 ring-yellow-400 ring-offset-1 rounded' : ''}`}
-                  style={{
-                    left: `${obj.x}%`,
-                    top: `${obj.y}%`,
-                    width: 80 * obj.scale,
-                    height: 80 * obj.scale,
-                    transform: 'translate(-50%, -50%)',
-                    objectFit: 'contain',
-                  }}
-                />
-              ))}
-            </div>
+            {selectedBackdrop ? (
+              <img src={selectedBackdrop.colored_svg || selectedBackdrop.thumbnail} alt="backdrop" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300 text-xl p-4 text-center">
+                Pick a backdrop below ↓
+              </div>
+            )}
+            {sceneObjects.map((obj, idx) => (
+              <img
+                key={idx}
+                src={obj.thumbnail}
+                alt={obj.item_name}
+                onPointerDown={e => handleObjectPointerDown(e, idx)}
+                onPointerMove={e => handleObjectPointerMove(e, idx)}
+                onPointerUp={handleObjectPointerUp}
+                onPointerCancel={handleObjectPointerUp}
+                className={`absolute select-none touch-none cursor-grab active:cursor-grabbing ${selectedObjectIdx === idx ? 'ring-4 ring-yellow-400 ring-offset-1 rounded' : ''}`}
+                style={{
+                  left: `${obj.x}%`,
+                  top: `${obj.y}%`,
+                  width: `${OBJ_SIZE_PCT * obj.scale}%`,
+                  aspectRatio: '1',
+                  transform: 'translate(-50%, -50%)',
+                  objectFit: 'contain',
+                }}
+              />
+            ))}
           </div>
 
           {selectedObjectIdx !== null && sceneObjects[selectedObjectIdx] && (

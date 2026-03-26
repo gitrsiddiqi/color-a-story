@@ -95,7 +95,8 @@ export default function StoryViewer({ pages, title, storyId }: StoryViewerProps)
                 style={{
                   left: `${toPercent(obj.x)}%`,
                   top: `${toPercent(obj.y)}%`,
-                  width: `${(80 * obj.scale / 600) * 100}%`,
+                  width: `${15 * obj.scale}%`,
+                  aspectRatio: '1',
                   transform: 'translate(-50%, -50%)',
                   objectFit: 'contain',
                 }}
