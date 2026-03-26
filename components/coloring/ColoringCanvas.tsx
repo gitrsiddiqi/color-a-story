@@ -257,19 +257,12 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
     const { x, y } = getCoords(e)
     const mask = findRegion(x, y)
     if (!mask) return
-
-    if (selectedColor) {
-      saveSnapshot()
-      fillRegion(mask, selectedColor)
-      clearSelection()
-      composite()
-    } else {
-      selectedPixelsRef.current = mask
-      drawSelection(mask)
-      setHasSelection(true)
-      composite()
-    }
-  }, [mode, selectedColor, findRegion, fillRegion, clearSelection, drawSelection, composite, saveSnapshot])
+    // Always just select the region — never fill on area click
+    selectedPixelsRef.current = mask
+    drawSelection(mask)
+    setHasSelection(true)
+    composite()
+  }, [mode, findRegion, drawSelection, composite])
 
   const brushPaint = useCallback((x: number, y: number) => {
     const color = colorRef.current
