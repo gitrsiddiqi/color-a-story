@@ -21,7 +21,7 @@ export default function ImageLibrary({ pages, categories, onSelect, title }: Ima
 
   return (
     <div className="w-full">
-      <h1 className="text-4xl sm:text-5xl font-bold text-purple-600 mb-5">{title}</h1>
+      <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-purple-600 mb-5">{title}</h1>
 
       <div className="flex gap-3 mb-5">
         <input
