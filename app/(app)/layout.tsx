@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import LogoutButton from '@/components/ui/LogoutButton'
+import MobileNav from '@/components/ui/MobileNav'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -14,20 +15,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #fef9f0 0%, #fdf0ff 50%, #f0f4ff 100%)' }}>
       {/* Top nav */}
       <nav className="bg-white shadow-lg border-b-4 border-yellow-400 sticky top-0 z-50">
-        <div className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="text-4xl">🎨</span>
-            <span className="text-2xl font-bold text-purple-600 hidden sm:block">Color A Story</span>
-          </Link>
-          {/* Desktop nav links */}
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+
+          {/* Left: hamburger (mobile) + logo */}
+          <div className="flex items-center gap-2">
+            <MobileNav username={username} />
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <span className="text-3xl sm:text-4xl">🎨</span>
+              <span className="text-xl sm:text-2xl font-bold text-purple-600">Color A Story</span>
+            </Link>
+          </div>
+
+          {/* Center: desktop nav links */}
           <div className="hidden sm:flex items-center gap-2">
             <NavLink href="/color/object" emoji="🖍️" label="Color" color="hover:bg-pink-100 hover:text-pink-700" />
             <NavLink href="/library" emoji="📚" label="Library" color="hover:bg-blue-100 hover:text-blue-700" />
             <NavLink href="/scene-builder" emoji="🎭" label="Scenes" color="hover:bg-green-100 hover:text-green-700" />
             <NavLink href="/stories" emoji="📖" label="Stories" color="hover:bg-yellow-100 hover:text-yellow-700" />
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-base font-bold text-gray-500 hidden md:block">👋 {username}</span>
+
+          {/* Right: username + logout (desktop only) */}
+          <div className="hidden sm:flex items-center gap-3">
+            <span className="text-base font-bold text-gray-500">👋 {username}</span>
             <LogoutButton />
           </div>
         </div>
