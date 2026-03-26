@@ -24,7 +24,10 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
 
   const [selectedBackdrop, setSelectedBackdrop] = useState<ColoredItem | null>(
     initialData?.backdrop_thumbnail
-      ? backdrops.find(b => b.thumbnail === initialData.backdrop_thumbnail) ?? null
+      ? backdrops.find(b =>
+          b.colored_svg === initialData.backdrop_thumbnail ||
+          b.thumbnail === initialData.backdrop_thumbnail
+        ) ?? null
       : null
   )
   const [sceneObjects, setSceneObjects] = useState<SceneObject[]>(initialData?.objects ?? [])
