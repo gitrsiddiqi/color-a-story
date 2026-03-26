@@ -236,9 +236,9 @@ export default function ColoringCanvas({ svgString, itemName, isBackdrop = false
       ) border[i] = 1
     }
 
-    // Pass 2 — dilate border inward by 2 px so it's visible at display scale
+    // Pass 2 — dilate border inward by 1 px
     const thick = new Uint8Array(mask.length)
-    const R = 2
+    const R = 1
     for (let i = 0; i < mask.length; i++) {
       if (!border[i]) continue
       for (let dy = -R; dy <= R; dy++) {
