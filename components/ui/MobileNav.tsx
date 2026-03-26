@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import Logo from './Logo'
 
 const NAV_ITEMS = [
   { href: '/color/object', emoji: '🖍️', label: 'Color Objects', color: 'hover:bg-pink-50 text-pink-700' },
@@ -39,9 +40,8 @@ export default function MobileNav({ username }: { username: string }) {
           <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b-4 border-yellow-400 bg-white">
-              <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-3">
-                <span className="text-3xl">🎨</span>
-                <span className="text-xl font-bold text-purple-600">Color A Story</span>
+              <Link href="/dashboard" onClick={() => setOpen(false)}>
+                <Logo iconSize={36} textClassName="text-lg" />
               </Link>
               <button
                 onClick={() => setOpen(false)}

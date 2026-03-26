@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import LogoutButton from '@/components/ui/LogoutButton'
 import MobileNav from '@/components/ui/MobileNav'
+import Logo from '@/components/ui/Logo'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,9 +21,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {/* Left: hamburger (mobile) + logo */}
           <div className="flex items-center gap-2">
             <MobileNav username={username} />
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <span className="text-3xl sm:text-4xl">🎨</span>
-              <span className="text-xl sm:text-2xl font-bold text-purple-600">Color A Story</span>
+            <Link href="/dashboard">
+              <Logo iconSize={38} textClassName="text-lg sm:text-xl" />
             </Link>
           </div>
 
