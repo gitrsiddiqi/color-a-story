@@ -19,7 +19,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <StepCard
           step={1} emoji="🖍️"
-          title="Color some objects"
+          title="Color Objects"
           desc="Pick animals, vehicles, food and more — then color them!"
           href="/color/object"
           bg="from-pink-400 to-rose-500"
@@ -27,7 +27,7 @@ export default async function DashboardPage() {
         />
         <StepCard
           step={2} emoji="🏞️"
-          title="Color a backdrop"
+          title="Color Backdrop"
           desc="Color a background like a jungle, beach or space!"
           href="/color/backdrop"
           bg="from-blue-400 to-cyan-500"
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
         />
         <StepCard
           step={3} emoji="🎭"
-          title="Build a scene"
+          title="Build A Scene"
           desc="Place your objects on a backdrop to make a scene!"
           href="/scene-builder"
           bg="from-green-400 to-emerald-500"
@@ -43,7 +43,7 @@ export default async function DashboardPage() {
         />
         <StepCard
           step={4} emoji="📖"
-          title="View your stories"
+          title="View Your Stories"
           desc="Read your stories, add more pages, and share!"
           href="/stories"
           bg="from-yellow-400 to-orange-500"
