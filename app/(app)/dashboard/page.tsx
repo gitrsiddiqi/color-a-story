@@ -23,72 +23,116 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user!.id)
 
+  const obj = objectCount ?? 0
+  const bkg = backdropCount ?? 0
+  const stories = storyCount ?? 0
+
+  // Determine which step they're on
+  const step = obj === 0 ? 1 : bkg === 0 ? 2 : stories === 0 ? 3 : 4
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 max-w-2xl mx-auto">
       <div className="bg-white rounded-3xl p-8 shadow border-2 border-yellow-300 text-center">
         <div className="text-6xl mb-3">🌈</div>
         <h1 className="text-4xl font-bold text-purple-600">Hello, {username}!</h1>
-        <p className="text-gray-500 text-lg mt-2">What would you like to create today?</p>
+        <p className="text-gray-500 text-lg mt-2">Build your story step by step!</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ActionCard
-          href="/color/object"
+      {/* Guided steps */}
+      <div className="flex flex-col gap-3">
+        <StepCard
+          step={1}
           emoji="🖍️"
-          title="Color an Object"
-          desc="Pick an object and color it!"
-          color="bg-pink-100 border-pink-300 hover:bg-pink-200"
+          title="Color some objects"
+          desc="Pick animals, vehicles, food and more — then color them!"
+          href="/color/object"
+          done={obj > 0}
+          active={step === 1}
+          count={obj > 0 ? `${obj} colored` : undefined}
         />
-        <ActionCard
-          href="/color/backdrop"
+        <StepCard
+          step={2}
           emoji="🏞️"
-          title="Color a Backdrop"
-          desc="Color a background scene"
-          color="bg-blue-100 border-blue-300 hover:bg-blue-200"
+          title="Color a backdrop"
+          desc="Color a background like a jungle, beach or space!"
+          href="/color/backdrop"
+          done={bkg > 0}
+          active={step === 2}
+          count={bkg > 0 ? `${bkg} colored` : undefined}
         />
-        <ActionCard
-          href="/scene-builder"
+        <StepCard
+          step={3}
           emoji="🎭"
-          title="Build a Scene"
-          desc="Place objects on backdrops"
-          color="bg-green-100 border-green-300 hover:bg-green-200"
+          title="Build a scene"
+          desc="Place your objects on a backdrop to create a scene!"
+          href="/scene-builder"
+          done={stories > 0}
+          active={step === 3}
+          disabled={obj === 0 && bkg === 0}
         />
-        <ActionCard
-          href="/stories"
+        <StepCard
+          step={4}
           emoji="📖"
-          title="My Stories"
-          desc="View your story books"
-          color="bg-yellow-100 border-yellow-300 hover:bg-yellow-200"
+          title="View your stories"
+          desc="Read your stories, add more pages, and share!"
+          href="/stories"
+          done={false}
+          active={step === 4}
+          disabled={stories === 0}
+          count={stories > 0 ? `${stories} ${stories === 1 ? 'story' : 'stories'}` : undefined}
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Objects Colored" count={objectCount ?? 0} emoji="🎨" />
-        <StatCard label="Backdrops Colored" count={backdropCount ?? 0} emoji="🖼️" />
-        <StatCard label="Stories Created" count={storyCount ?? 0} emoji="📚" />
-      </div>
+      {/* Quick links if returning user */}
+      {step === 4 && (
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/color/object" className="bg-pink-100 border-2 border-pink-300 hover:bg-pink-200 rounded-2xl p-4 text-center font-bold text-gray-700 transition-all">
+            🖍️ Color more objects
+          </Link>
+          <Link href="/scene-builder" className="bg-green-100 border-2 border-green-300 hover:bg-green-200 rounded-2xl p-4 text-center font-bold text-gray-700 transition-all">
+            🎭 New scene
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
 
-function ActionCard({ href, emoji, title, desc, color }: {
-  href: string; emoji: string; title: string; desc: string; color: string
+function StepCard({ step, emoji, title, desc, href, done, active, disabled, count }: {
+  step: number
+  emoji: string
+  title: string
+  desc: string
+  href: string
+  done: boolean
+  active: boolean
+  disabled?: boolean
+  count?: string
 }) {
-  return (
-    <Link href={href} className={`rounded-2xl border-2 p-5 flex flex-col items-center text-center gap-2 transition-all shadow hover:shadow-md ${color}`}>
-      <span className="text-4xl">{emoji}</span>
-      <span className="font-bold text-lg text-gray-700">{title}</span>
-      <span className="text-sm text-gray-500">{desc}</span>
-    </Link>
-  )
-}
+  const base = 'rounded-2xl border-2 p-4 flex items-center gap-4 transition-all shadow-sm'
+  const style = disabled
+    ? `${base} bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed`
+    : active
+    ? `${base} bg-yellow-50 border-yellow-400 shadow-md`
+    : done
+    ? `${base} bg-green-50 border-green-300`
+    : `${base} bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50`
 
-function StatCard({ label, count, emoji }: { label: string; count: number; emoji: string }) {
-  return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 p-4 text-center shadow">
-      <div className="text-3xl">{emoji}</div>
-      <div className="text-3xl font-bold text-purple-600 mt-1">{count}</div>
-      <div className="text-xs text-gray-500 mt-1">{label}</div>
-    </div>
+  const inner = (
+    <>
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 ${done ? 'bg-green-500' : active ? 'bg-yellow-400' : 'bg-gray-300'}`}>
+        {done ? '✓' : step}
+      </div>
+      <div className="text-3xl flex-shrink-0">{emoji}</div>
+      <div className="flex-1 min-w-0">
+        <div className="font-bold text-gray-700">{title}</div>
+        <div className="text-sm text-gray-500">{desc}</div>
+      </div>
+      {count && <div className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-lg flex-shrink-0">{count}</div>}
+      {active && <div className="text-yellow-600 font-bold flex-shrink-0">Start →</div>}
+    </>
   )
+
+  if (disabled) return <div className={style}>{inner}</div>
+  return <Link href={href} className={style}>{inner}</Link>
 }

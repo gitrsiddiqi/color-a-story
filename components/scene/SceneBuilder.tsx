@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { ColoredItem, SceneObject, SceneData } from '@/types'
 
 interface SceneBuilderProps {
@@ -189,9 +190,14 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
         {/* Side panel */}
         <div className="w-full lg:w-64 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border-2 border-blue-200 p-3">
-            <h3 className="font-bold text-blue-600 mb-2">🏞️ Backdrops</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-blue-600">🏞️ Backdrops</h3>
+              <Link href="/color/backdrop" className="text-xs font-bold text-blue-500 hover:underline">+ Color one</Link>
+            </div>
             {backdrops.length === 0 ? (
-              <p className="text-sm text-gray-400">No backdrops yet. Color some backdrops first!</p>
+              <Link href="/color/backdrop" className="block text-center bg-blue-50 border-2 border-dashed border-blue-300 rounded-xl p-3 text-sm text-blue-500 font-bold hover:bg-blue-100">
+                Tap here to color a backdrop first!
+              </Link>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {backdrops.map(b => (
@@ -208,9 +214,14 @@ export default function SceneBuilder({ backdrops, objects, initialData, onSave, 
           </div>
 
           <div className="bg-white rounded-2xl border-2 border-pink-200 p-3 flex-1">
-            <h3 className="font-bold text-pink-600 mb-2">🖍️ Objects <span className="text-xs text-gray-400 font-normal">(tap to add)</span></h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-pink-600">🖍️ Objects <span className="text-xs text-gray-400 font-normal">(tap to add)</span></h3>
+              <Link href="/color/object" className="text-xs font-bold text-pink-500 hover:underline">+ Color one</Link>
+            </div>
             {objects.length === 0 ? (
-              <p className="text-sm text-gray-400">No objects yet. Color some objects first!</p>
+              <Link href="/color/object" className="block text-center bg-pink-50 border-2 border-dashed border-pink-300 rounded-xl p-3 text-sm text-pink-500 font-bold hover:bg-pink-100">
+                Tap here to color an object first!
+              </Link>
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {objects.map(obj => (
